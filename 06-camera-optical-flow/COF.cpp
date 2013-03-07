@@ -2,15 +2,22 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 
-#include <unistd.h>
+//#include <unistd.h>
 #include <string>
 #include <iostream>
 
-#define MIN_POINTS 75
+#define MIN_TRACKED_POINTS 75
+#define MIN_DETECTED_POINTS 20
 
 using namespace cv;
 using namespace std;
 
+
+/**
+ * Converts a vector of KeyPoints to vector of Points
+ * @params vector<KeyPoint>& in
+ * @returns vector<Point2f> out
+ */
 vector<Point2f> keypoints2points(const vector<KeyPoint>& in)
 {
   vector<Point2f> out;
@@ -23,6 +30,12 @@ vector<Point2f> keypoints2points(const vector<KeyPoint>& in)
   return out;
 }
 
+
+/**
+ * Converts a vector of Points to vector of KeyPoints
+ * @params vector<Point2f>& in
+ * @returns vector<KeyPoint> out
+ */
 vector<KeyPoint> points2keypoints(const vector<Point2f>& in)
 {
   vector<KeyPoint> out;
@@ -35,6 +48,12 @@ vector<KeyPoint> points2keypoints(const vector<Point2f>& in)
   return out;
 }
 
+
+/**
+ * Detects Feature Points in given image
+ * @params Mat frame
+ * @return vector<Keypoint> keypoints
+ */
 vector<KeyPoint> detectFP(Mat frame) {
 
     int minHessian = 400;
@@ -46,9 +65,14 @@ vector<KeyPoint> detectFP(Mat frame) {
     return keypoints;
 }
 
-
+/**
+ * Main function of the application
+ *
+ */
 int main(int argc, char* argv[])
 {
+
+    // Parsing parameters:
 
     bool from_file = false;
     string filename;
@@ -90,22 +114,14 @@ int main(int argc, char* argv[])
         cap.open(camera_num);
     }
 
-    //VideoCapture cap(0); // open the default camera
     if(!cap.isOpened())  // check if we succeeded
         return -1;
 
     namedWindow("img",1);
 
-    // parametry optical flow:
-    //vector <Point2f> points, prev_points;
+
     vector<uchar> status;
     vector<float> err;
-    Size winSize = Size(21,21);
-    int maxLevel = 3;
-    TermCriteria criteria = TermCriteria(TermCriteria::COUNT+TermCriteria::EPS, 30, 0.01);
-    int flags = 0;
-    double minEigThreshold = 1e-4;
-    // =========================================================================
 
     int tracked_points;
 
@@ -113,11 +129,12 @@ int main(int argc, char* argv[])
     vector<KeyPoint> keypoints, prev_keypoints;
     vector <Point2f> points, prev_points;
 
-    // first frame
+    // first frame capture:
     cap >> frame;
     keypoints = detectFP(frame);
 
-    while(keypoints.size() < 10) {
+    // check if the number of detected key points is enough:
+    while(keypoints.size() < MIN_DETECTED_POINTS) {
         cout << "Not enough keypoints detected. (" << keypoints.size() << ")." << endl;
         cap >> frame;
         keypoints = detectFP(frame);
@@ -125,43 +142,47 @@ int main(int argc, char* argv[])
     }
 
 
+    // for every other frame:
     for(;;)
     {
-
         tracked_points = 0;
 
-        // backup
+        // copy the last frame and keypoints:
         prev_frame = frame.clone();
         prev_points = keypoints2points(keypoints);
 
-        //cout << "Prev_points.size() = " << prev_points.size() << endl;
+        // get a new frame from camera
+        cap >> frame;
 
-        cap >> frame; // get a new frame from camera
-        //points.clear();
-
+        // perform tracking of keypoints:
         calcOpticalFlowPyrLK(prev_frame, frame, prev_points, points, status, err);
 
+        // count the number of successfully tracked points
         for (int i = 0; i < status.size(); i++) {
             if (status.at(i)) {
                 tracked_points++;
             }
         }
 
-        if (tracked_points < MIN_POINTS) {
-            cout << "Not enough tracking points. (" << tracked_points << " found but " << MIN_POINTS << " needed)." << endl;
+        // if the number of tracked points is less than desired:
+        if (tracked_points < MIN_TRACKED_POINTS) {
+            cout << "Not enough tracking points. (" << tracked_points << " found but " << MIN_TRACKED_POINTS << " needed)." << endl;
+            // detect new keypoints:
             keypoints = detectFP(frame);
-            while(keypoints.size() < 10) {
+            // if the number of detected keypoints is less than desired:
+            while(keypoints.size() < MIN_DETECTED_POINTS) {
                 cout << "Not enough keypoints detected. (" << keypoints.size() << ")." << endl;
+                // skip the actual frame, grab another one and detect keypoints on it
                 cap >> frame;
                 keypoints = detectFP(frame);
-                drawKeypoints(frame, keypoints, frame, Scalar(255, 234, 0), DrawMatchesFlags::DRAW_OVER_OUTIMG);
+                //drawKeypoints(frame, keypoints, frame, Scalar(255, 234, 0), DrawMatchesFlags::DRAW_OVER_OUTIMG);
             }
             continue;
         }
 
         keypoints = points2keypoints(points);
 
-
+        // draw lines representing points movement:
         for (int i = 0; i < status.size(); i++) {
             if (status.at(i)) {
                 line(frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
@@ -176,25 +197,4 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-    //http://www.cs.ucsb.edu/~holl/CS290I/Assignments/Assignments-3/Assignment3Mosaicing.html
-
-    //while ( videoReader.read(colorFrame) )
-    //{
-        //// convert frame to black and white
-        //cvtColor(colorFrame, currentFrame, CV_RGB2GRAY, 1);
-
-        //// compute the optical flow
-        //calcOpticalFlowPyrLK(previousFrame, currentFrame, *previousPoints, *currentPoints, *status, *err);
-
-        //// display the results
-        //for ( i = 0 ; i < status->size() ; ++i )
-        //{
-                //if ( status->at(i) )
-                //{
-                        //line(colorFrame, previousPoints->at(i), currentPoints->at(i), Scalar(0, 0, 255), 2);
-                //}
-        //}
-        //imshow("Optical flow", colorFrame);
-
-        //// switch to next frame
-        //previousFrame = currentFrame;
+//http://www.cs.ucsb.edu/~holl/CS290I/Assignments/Assignments-3/Assignment3Mosaicing.html
