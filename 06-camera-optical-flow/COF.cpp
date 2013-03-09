@@ -1,17 +1,26 @@
 #include "opencv2/opencv.hpp"
 #include <opencv2/features2d/features2d.hpp>
-#include <opencv2/nonfree/features2d.hpp>
+// only needed in Fedora
+//#include <opencv2/nonfree/features2d.hpp>
 
 //#include <unistd.h>
 #include <string>
 #include <iostream>
 
-#define MIN_TRACKED_POINTS 75
-#define MIN_DETECTED_POINTS 20
+#define MIN_TRACKED_POINTS 150
+#define MIN_DETECTED_POINTS 50
+#define MIN_HOMOGRAPHY_POINTS 5
 
 using namespace cv;
 using namespace std;
 
+
+void showResult(Mat result)
+{
+    namedWindow("res", 1);
+    imshow("res", result);
+    waitKey(0);
+}
 
 /**
  * Converts a vector of KeyPoints to vector of Points
@@ -56,7 +65,7 @@ vector<KeyPoint> points2keypoints(const vector<Point2f>& in)
  */
 vector<KeyPoint> detectFP(Mat frame) {
 
-    int minHessian = 400;
+    int minHessian = 350;
     SurfFeatureDetector detector(minHessian);
 
     vector<KeyPoint> keypoints;
@@ -123,29 +132,44 @@ int main(int argc, char* argv[])
     vector<uchar> status;
     vector<float> err;
 
-    int tracked_points;
+    int tracked_points, homography_points;
 
-    Mat frame, prev_frame;
+    Mat frame, prev_frame, warped_frame;
     vector<KeyPoint> keypoints, prev_keypoints;
     vector <Point2f> points, prev_points;
 
     // first frame capture:
     cap >> frame;
+    if (frame.empty()) {
+        cerr << "No data could be read!" << endl;
+        return 0;
+    }
     keypoints = detectFP(frame);
 
     // check if the number of detected key points is enough:
     while(keypoints.size() < MIN_DETECTED_POINTS) {
         cout << "Not enough keypoints detected. (" << keypoints.size() << ")." << endl;
         cap >> frame;
+        if (frame.empty()) {
+            cerr << "Not enough data read!" << endl;
+            return 0;
+        }
         keypoints = detectFP(frame);
         //drawKeypoints(frame, keypoints, frame, Scalar(255, 234, 0), DrawMatchesFlags::DRAW_OVER_OUTIMG);
     }
 
 
+    std::vector<uchar> mask;
+    Mat H;
+    //Mat H_orig = Mat::ones(3, 3, DataType<double>::type);
+    Mat H_orig = Mat::ones(3, 3, CV_64FC1);
+    Mat result = Mat::zeros(Size(frame.cols*3, frame.rows*5), CV_8UC3);
+
     // for every other frame:
     for(;;)
     {
         tracked_points = 0;
+        homography_points = 0;
 
         // copy the last frame and keypoints:
         prev_frame = frame.clone();
@@ -153,9 +177,15 @@ int main(int argc, char* argv[])
 
         // get a new frame from camera
         cap >> frame;
+        if (frame.empty()) {
+            showResult(result);
+            return 0;
+        }
 
         // perform tracking of keypoints:
         calcOpticalFlowPyrLK(prev_frame, frame, prev_points, points, status, err);
+
+        H = findHomography(prev_points, points, CV_RANSAC, 3.0, mask);
 
         // count the number of successfully tracked points
         for (int i = 0; i < status.size(); i++) {
@@ -163,6 +193,16 @@ int main(int argc, char* argv[])
                 tracked_points++;
             }
         }
+
+        for (int i = 0; i < mask.size(); i++) {
+            if (mask.at(i)) {
+                homography_points++;
+            }
+        }
+        if (homography_points < MIN_HOMOGRAPHY_POINTS) {
+            cerr << "ERROR: Only " << homography_points << "points detected but " << MIN_HOMOGRAPHY_POINTS << " needed." << endl;
+        }
+        //cout << "Tracked/After RANSAC: " << tracked_points << "/" << homography_points << endl;
 
         // if the number of tracked points is less than desired:
         if (tracked_points < MIN_TRACKED_POINTS) {
@@ -174,18 +214,28 @@ int main(int argc, char* argv[])
                 cout << "Not enough keypoints detected. (" << keypoints.size() << ")." << endl;
                 // skip the actual frame, grab another one and detect keypoints on it
                 cap >> frame;
+                if (frame.empty()) {
+                    showResult(result);
+                    return 0;
+                }
                 keypoints = detectFP(frame);
                 //drawKeypoints(frame, keypoints, frame, Scalar(255, 234, 0), DrawMatchesFlags::DRAW_OVER_OUTIMG);
             }
             continue;
         }
 
+        H_orig *= H;
+        //cout << H << endl;
+
         keypoints = points2keypoints(points);
 
         // draw lines representing points movement:
         for (int i = 0; i < status.size(); i++) {
             if (status.at(i)) {
-                line(frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
+                if (mask.at(i))
+                    line(frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
+                else
+                    line(frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
             }
         }
 
@@ -193,6 +243,9 @@ int main(int argc, char* argv[])
 
         if(waitKey(30) >= 0) break;
     }
+
+    cout << H << endl;
+    showResult(result);
     // the camera will be deinitialized automatically in VideoCapture destructor
     return 0;
 }
