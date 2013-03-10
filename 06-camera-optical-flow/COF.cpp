@@ -15,12 +15,17 @@ using namespace cv;
 using namespace std;
 
 
+/**
+ * Shows a window containing final image
+ * @params Mat result
+ */
 void showResult(Mat result)
 {
     namedWindow("res", 1);
     imshow("res", result);
     waitKey(0);
 }
+
 
 /**
  * Converts a vector of KeyPoints to vector of Points
@@ -74,6 +79,7 @@ vector<KeyPoint> detectFP(Mat frame) {
     return keypoints;
 }
 
+
 /**
  * Main function of the application
  *
@@ -82,7 +88,6 @@ int main(int argc, char* argv[])
 {
 
     // Parsing parameters:
-
     bool from_file = false;
     string filename;
     int camera_num;
@@ -161,7 +166,6 @@ int main(int argc, char* argv[])
 
     std::vector<uchar> mask;
     Mat H;
-    //Mat H_orig = Mat::ones(3, 3, DataType<double>::type);
     Mat H_orig = Mat::ones(3, 3, CV_64FC1);
     Mat result = Mat::zeros(Size(frame.cols*3, frame.rows*5), CV_8UC3);
 
@@ -199,16 +203,21 @@ int main(int argc, char* argv[])
                 homography_points++;
             }
         }
-        if (homography_points < MIN_HOMOGRAPHY_POINTS) {
-            cerr << "ERROR: Only " << homography_points << "points detected but " << MIN_HOMOGRAPHY_POINTS << " needed." << endl;
-        }
-        //cout << "Tracked/After RANSAC: " << tracked_points << "/" << homography_points << endl;
 
-        // if the number of tracked points is less than desired:
-        if (tracked_points < MIN_TRACKED_POINTS) {
-            cout << "Not enough tracking points. (" << tracked_points << " found but " << MIN_TRACKED_POINTS << " needed)." << endl;
+        if (homography_points < MIN_HOMOGRAPHY_POINTS || tracked_points < MIN_TRACKED_POINTS) {
+            // if the number of homography points after RANSAC is less than desired:
+            if (homography_points < MIN_HOMOGRAPHY_POINTS) {
+                cerr << "ERROR: Only " << homography_points << "points detected but " << MIN_HOMOGRAPHY_POINTS << " needed." << endl;
+            }
+
+            // if the number of tracked points is less than desired:
+            if (tracked_points < MIN_TRACKED_POINTS) {
+                cout << "Not enough tracking points. (" << tracked_points << " found but " << MIN_TRACKED_POINTS << " needed)." << endl;
+            }
+
             // detect new keypoints:
             keypoints = detectFP(frame);
+
             // if the number of detected keypoints is less than desired:
             while(keypoints.size() < MIN_DETECTED_POINTS) {
                 cout << "Not enough keypoints detected. (" << keypoints.size() << ")." << endl;
@@ -224,27 +233,32 @@ int main(int argc, char* argv[])
             continue;
         }
 
+        warpPerspective(frame, warped_frame, H, frame.size());
+
         H_orig *= H;
-        //cout << H << endl;
+        warped_frame.copyTo(result);
 
         keypoints = points2keypoints(points);
 
         // draw lines representing points movement:
         for (int i = 0; i < status.size(); i++) {
             if (status.at(i)) {
-                if (mask.at(i))
+                if (mask.at(i)) {
                     line(frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
-                else
+                    line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
+                }
+                else {
                     line(frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
+                    line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
+                }
             }
         }
 
-        imshow("img", frame);
+        imshow("img", warped_frame);
 
         if(waitKey(30) >= 0) break;
     }
 
-    cout << H << endl;
     showResult(result);
     // the camera will be deinitialized automatically in VideoCapture destructor
     return 0;
