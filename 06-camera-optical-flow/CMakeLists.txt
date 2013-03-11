@@ -1,5 +1,5 @@
 project(COF)
 cmake_minimum_required(VERSION 2.8)
 find_package(OpenCV REQUIRED)
-add_executable(COF COF.cpp)
+add_executable(COF ImageStitcher.hpp ImageStitcher.cpp COF.cpp)
 target_link_libraries(COF ${OpenCV_LIBS})

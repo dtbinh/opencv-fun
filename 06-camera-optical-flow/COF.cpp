@@ -7,6 +7,8 @@
 #include <string>
 #include <iostream>
 
+#include "ImageStitcher.hpp"
+
 #define MIN_TRACKED_POINTS 150
 #define MIN_DETECTED_POINTS 50
 #define MIN_HOMOGRAPHY_POINTS 5
@@ -167,7 +169,12 @@ int main(int argc, char* argv[])
     std::vector<uchar> mask;
     Mat H;
     Mat H_orig = Mat::ones(3, 3, CV_64FC1);
-    Mat result = Mat::zeros(Size(frame.cols*3, frame.rows*5), CV_8UC3);
+    //Mat result = Mat::zeros(Size(frame.cols*3, frame.rows*5), CV_8UC3);
+    Mat result, result_next;
+
+    result = frame.clone();
+
+    ImageStitcher stitcher;
 
     // for every other frame:
     for(;;)
@@ -233,10 +240,10 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        warpPerspective(frame, warped_frame, H, frame.size());
+        //warpPerspective(frame, warped_frame, H, frame.size());
 
-        H_orig *= H;
-        warped_frame.copyTo(result);
+        //H_orig *= H;
+        //warped_frame.copyTo(result);
 
         keypoints = points2keypoints(points);
 
@@ -244,22 +251,27 @@ int main(int argc, char* argv[])
         for (int i = 0; i < status.size(); i++) {
             if (status.at(i)) {
                 if (mask.at(i)) {
-                    line(frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
-                    line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
+                    //line(frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
+                    //line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
+                    cout << "PREV Point: " << prev_points.at(i) << " => " << points.at(i) <<  " == " << prev_points.at(i) - points.at(i) << endl;
                 }
                 else {
-                    line(frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
-                    line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
+                    //line(frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
+                    //line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
                 }
             }
         }
 
-        imshow("img", warped_frame);
+        result_next = stitcher.stitchTwoImages(result, frame, H);
+        result = result_next.clone();
+
+        //imshow("img", warped_frame);
+        imshow("img", result_next);
 
         if(waitKey(30) >= 0) break;
     }
 
-    showResult(result);
+    //showResult(result);
     // the camera will be deinitialized automatically in VideoCapture destructor
     return 0;
 }
