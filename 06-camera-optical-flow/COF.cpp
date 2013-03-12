@@ -1,7 +1,7 @@
 #include "opencv2/opencv.hpp"
 #include <opencv2/features2d/features2d.hpp>
 // only needed in Fedora
-//#include <opencv2/nonfree/features2d.hpp>
+#include <opencv2/nonfree/features2d.hpp>
 
 //#include <unistd.h>
 #include <string>
@@ -174,7 +174,7 @@ int main(int argc, char* argv[])
 
     result = frame.clone();
 
-    ImageStitcher stitcher;
+    //ImageStitcher stitcher;
 
     // for every other frame:
     for(;;)
@@ -240,10 +240,10 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        //warpPerspective(frame, warped_frame, H, frame.size());
+        warpPerspective(frame, warped_frame, H, frame.size());
 
         //H_orig *= H;
-        //warped_frame.copyTo(result);
+        warped_frame.copyTo(result);
 
         keypoints = points2keypoints(points);
 
@@ -251,22 +251,22 @@ int main(int argc, char* argv[])
         for (int i = 0; i < status.size(); i++) {
             if (status.at(i)) {
                 if (mask.at(i)) {
-                    //line(frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
-                    //line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
-                    cout << "PREV Point: " << prev_points.at(i) << " => " << points.at(i) <<  " == " << prev_points.at(i) - points.at(i) << endl;
+                    line(frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
+                    line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
+                    //cout << "PREV Point: " << prev_points.at(i) << " => " << points.at(i) <<  " == " << prev_points.at(i) - points.at(i) << endl;
                 }
                 else {
-                    //line(frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
-                    //line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
+                    line(frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
+                    line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
                 }
             }
         }
 
-        result_next = stitcher.stitchTwoImages(result, frame, H);
-        result = result_next.clone();
+        //result_next = stitcher.stitchTwoImages(result, frame, H);
+        //result = result_next.clone();
 
-        //imshow("img", warped_frame);
-        imshow("img", result_next);
+        imshow("img", warped_frame);
+        //imshow("img", result_next);
 
         if(waitKey(30) >= 0) break;
     }
