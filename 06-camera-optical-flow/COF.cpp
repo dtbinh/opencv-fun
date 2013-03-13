@@ -169,16 +169,21 @@ int main(int argc, char* argv[])
     std::vector<uchar> mask;
     Mat H;
     Mat H_orig = Mat::ones(3, 3, CV_64FC1);
-    //Mat result = Mat::zeros(Size(frame.cols*3, frame.rows*5), CV_8UC3);
-    Mat result, result_next;
+    Mat result = Mat::zeros(Size(frame.cols*2, frame.rows*2), CV_8UC3);
 
-    result = frame.clone();
+    // put the first frame in the center of the final picture:
+    frame.copyTo(result(Rect(result.cols/2-frame.cols/2, result.rows/2-frame.rows/2, frame.cols, frame.rows)));
+
+    Point2f posun;
 
     //ImageStitcher stitcher;
+
 
     // for every other frame:
     for(;;)
     {
+        double tmp_x, tmp_y;
+
         tracked_points = 0;
         homography_points = 0;
 
@@ -211,6 +216,23 @@ int main(int argc, char* argv[])
             }
         }
 
+        // count average movement:
+        for (int i = 0; i< mask.size(); i++) {
+            if (mask.at(i)) {
+                tmp_x += points[i].x - prev_points[i].x;
+                tmp_y += points[i].y - prev_points[i].y;
+            }
+        }
+        tmp_x = tmp_x/homography_points;
+        tmp_y = tmp_y/homography_points;
+        posun += Point2f(tmp_x, tmp_y);
+        //cout << "Posuv ve snimku: " << Point2f(tmp_x, tmp_y) << endl;
+
+        if (posun.x > frame.cols/4 || posun.y > frame.rows/4) {
+            cout << "Celkovy posuv: " << posun << endl;
+            posun = Point2f(0.0, 0.0);
+        }
+
         if (homography_points < MIN_HOMOGRAPHY_POINTS || tracked_points < MIN_TRACKED_POINTS) {
             // if the number of homography points after RANSAC is less than desired:
             if (homography_points < MIN_HOMOGRAPHY_POINTS) {
@@ -221,6 +243,9 @@ int main(int argc, char* argv[])
             if (tracked_points < MIN_TRACKED_POINTS) {
                 cout << "Not enough tracking points. (" << tracked_points << " found but " << MIN_TRACKED_POINTS << " needed)." << endl;
             }
+
+            cout << "Celkovy posuv: " << posun << endl;
+            posun = Point2f(0.0, 0.0);
 
             // detect new keypoints:
             keypoints = detectFP(frame);
@@ -240,10 +265,10 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        warpPerspective(frame, warped_frame, H, frame.size());
+        //warpPerspective(frame, warped_frame, H, frame.size());
 
         //H_orig *= H;
-        warped_frame.copyTo(result);
+        //warped_frame.copyTo(result);
 
         keypoints = points2keypoints(points);
 
@@ -265,15 +290,22 @@ int main(int argc, char* argv[])
         //result_next = stitcher.stitchTwoImages(result, frame, H);
         //result = result_next.clone();
 
-        imshow("img", warped_frame);
+        imshow("img", frame);
+        //imshow("img", warped_frame);
         //imshow("img", result_next);
 
         if(waitKey(30) >= 0) break;
     }
 
-    //showResult(result);
+    showResult(result);
     // the camera will be deinitialized automatically in VideoCapture destructor
     return 0;
 }
 
 //http://www.cs.ucsb.edu/~holl/CS290I/Assignments/Assignments-3/Assignment3Mosaicing.html
+
+// EMAIL:
+
+//warpPerspective(*image, *mosaic, mosaicH, mosaicSize, INTER_LINEAR, BORDER_TRANSPARENT);
+
+//with image being the current video frame, mosaic the bigger mosaic image, and mosaicH the Homography.
