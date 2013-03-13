@@ -66,10 +66,10 @@ vector<KeyPoint> points2keypoints(const vector<Point2f>& in)
 /**
  * Detects Feature Points in given image
  * @params Mat frame
- * @return vector<Keypoint> keypoints
+ * @returns vector<KeyPoint> keypoints
  */
-vector<KeyPoint> detectFP(Mat frame) {
-
+vector<KeyPoint> detectFP(Mat frame)
+{
     int minHessian = 350;
     SurfFeatureDetector detector(minHessian);
 
@@ -77,6 +77,54 @@ vector<KeyPoint> detectFP(Mat frame) {
     detector.detect(frame, keypoints);
 
     return keypoints;
+}
+
+
+/**
+ * Returns matches of detected keypoints
+ * @params vector<KeyPoint> kp01, kp02, Mat img01, img02
+ * @returns vector<DMatch> matches
+ */
+vector<DMatch> findMatches(Mat img01, Mat img02, vector<KeyPoint> kp01, vector<KeyPoint> kp02)
+{
+
+    // Calculate descriptors (feature vectors):
+    SurfDescriptorExtractor extractor;
+
+    Mat descriptors01, descriptors02;
+
+    extractor.compute(img01, kp01, descriptors01);
+    extractor.compute(img02, kp02, descriptors02);
+
+    // Matching descriptor vectors using FLANN matcher:
+    FlannBasedMatcher matcher;
+
+    vector<DMatch> matches;
+
+    matcher.match(descriptors01, descriptors02, matches);
+
+    double max_dist = 0;
+    double min_dist = 100;
+
+    // Calculation of max and min distances between keypoints
+    for (int i = 0; i < descriptors01.rows; i++) {
+        double dist = matches[i].distance;
+        if (dist < min_dist)
+            min_dist = dist;
+        if (dist > max_dist)
+            max_dist = dist;
+    }
+
+    // Return only "good" matches (whose distance is less than 3*min_dist)
+    vector<DMatch> good_matches;
+
+    for (int i = 0; i < descriptors01.rows; i++) {
+        if (matches[i].distance < 3*min_dist) {
+            good_matches.push_back(matches[i]);
+        }
+    }
+
+    return good_matches;
 }
 
 
@@ -141,7 +189,10 @@ int main(int argc, char* argv[])
 
     Mat frame, prev_frame, warped_frame;
     vector<KeyPoint> keypoints, prev_keypoints;
-    vector <Point2f> points, prev_points;
+    vector<Point2f> points, prev_points;
+    std::vector<Point2f> gkp01, gkp02;
+
+    vector<DMatch> matches;
 
     Point2f movement;
 
@@ -227,8 +278,36 @@ int main(int argc, char* argv[])
             keypoints = detectFP(frame);
 
             /* zde bude matching bodu
-             * vypocet homografie
-             * image warping
+             */
+            matches.clear(); // just to be sure
+            matches = findMatches(result, frame, res_keypoints, keypoints);
+            cout << "Found " << matches.size() << " matches ";
+
+             /* vypocet homografie
+              */
+            // Get keypoints from the good matches
+
+            for (int i = 0; i < matches.size(); i++) {
+                gkp01.push_back(res_keypoints[matches[i].queryIdx].pt);
+                gkp02.push_back(keypoints[matches[i].trainIdx].pt);
+            }
+
+            // THIS HAS TO GO TO FUNCTION IN ORDER NOT TO MESS UP THE VARIABLES ALREADY USED
+            // TOO SLEEPY TO WORK ON IT NOW ...
+            //mask.clear();
+            //H = findHomography(gkp01, gkp02, CV_RANSAC, 3.0, mask);
+
+            //// count the number of inliers:
+            //int new_homography_points = 0;
+            //for (int i = 0; i < mask.size(); i++) {
+                //if (mask.at(i)) {
+                    //new_homography_points++;
+                //}
+            //}
+
+            //cout << "(" << new_homography_points << " po RANSAC)." << endl;
+
+             /* image warping
              * image stitching */
         }
 
