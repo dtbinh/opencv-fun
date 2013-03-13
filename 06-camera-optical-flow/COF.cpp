@@ -174,7 +174,7 @@ int main(int argc, char* argv[])
     // put the first frame in the center of the final picture:
     frame.copyTo(result(Rect(result.cols/2-frame.cols/2, result.rows/2-frame.rows/2, frame.cols, frame.rows)));
 
-    Point2f posun;
+    Point2f movement;
 
     //ImageStitcher stitcher;
 
@@ -225,12 +225,13 @@ int main(int argc, char* argv[])
         }
         tmp_x = tmp_x/homography_points;
         tmp_y = tmp_y/homography_points;
-        posun += Point2f(tmp_x, tmp_y);
+        movement += Point2f(tmp_x, tmp_y);
         //cout << "Posuv ve snimku: " << Point2f(tmp_x, tmp_y) << endl;
 
-        if (posun.x > frame.cols/4 || posun.y > frame.rows/4) {
-            cout << "Celkovy posuv: " << posun << endl;
-            posun = Point2f(0.0, 0.0);
+        // if the movement is larger than 1/4 of the frame size:
+        if (movement.x > frame.cols/4 || movement.y > frame.rows/4) {
+            cout << "Summary of movement: " << movement << endl;
+            movement = Point2f(0.0, 0.0);
         }
 
         if (homography_points < MIN_HOMOGRAPHY_POINTS || tracked_points < MIN_TRACKED_POINTS) {
@@ -244,8 +245,9 @@ int main(int argc, char* argv[])
                 cout << "Not enough tracking points. (" << tracked_points << " found but " << MIN_TRACKED_POINTS << " needed)." << endl;
             }
 
-            cout << "Celkovy posuv: " << posun << endl;
-            posun = Point2f(0.0, 0.0);
+            // if either the number of tracking points or homography points is less than desired:
+            cout << "Summary of movement: " << movement << endl;
+            movement = Point2f(0.0, 0.0);
 
             // detect new keypoints:
             keypoints = detectFP(frame);
