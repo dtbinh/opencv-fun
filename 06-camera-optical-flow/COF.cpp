@@ -1,7 +1,7 @@
 #include "opencv2/opencv.hpp"
 #include <opencv2/features2d/features2d.hpp>
 // only needed in Fedora
-#include <opencv2/nonfree/features2d.hpp>
+//#include <opencv2/nonfree/features2d.hpp>
 
 #include <string>
 #include <iostream>
@@ -158,7 +158,12 @@ int main(int argc, char* argv[])
     Mat result = Mat::zeros(Size(frame.cols*2, frame.rows*2), CV_8UC3);
 
     // put the first frame in the center of the final picture:
-    frame.copyTo(result(Rect(result.cols/2-frame.cols/2, result.rows/2-frame.rows/2, frame.cols, frame.rows)));
+    Rect roi(result.cols/2-frame.cols/2, result.rows/2-frame.rows/2, frame.cols, frame.rows);
+    Mat resultROI = result(roi);
+    frame.copyTo(resultROI);
+
+    // this only works in OpenCV 2.4:
+    //frame.copyTo(result(Rect(result.cols/2-frame.cols/2, result.rows/2-frame.rows/2, frame.cols, frame.rows)));
 
     keypoints = detectFP(result);
     // clone keypoints to res_keypoints:
