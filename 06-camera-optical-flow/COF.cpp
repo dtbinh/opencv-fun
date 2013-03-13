@@ -151,20 +151,12 @@ int main(int argc, char* argv[])
         cerr << "No data could be read!" << endl;
         return 0;
     }
-    keypoints = detectFP(frame);
 
-    // check if the number of detected key points is enough:
-    while(keypoints.size() < MIN_DETECTED_POINTS) {
-        cout << "Not enough keypoints detected. (" << keypoints.size() << ")." << endl;
-        cap >> frame;
-        if (frame.empty()) {
-            cerr << "Not enough data read!" << endl;
-            return 0;
-        }
-        keypoints = detectFP(frame);
-        //drawKeypoints(frame, keypoints, frame, Scalar(255, 234, 0), DrawMatchesFlags::DRAW_OVER_OUTIMG);
-    }
 
+    vector<Point2f> tmp_points;
+    Mat tmp_frame;
+
+    Point2f movement;
 
     std::vector<uchar> mask;
     Mat H;
@@ -174,10 +166,20 @@ int main(int argc, char* argv[])
     // put the first frame in the center of the final picture:
     frame.copyTo(result(Rect(result.cols/2-frame.cols/2, result.rows/2-frame.rows/2, frame.cols, frame.rows)));
 
-    Point2f movement;
+    keypoints = detectFP(result);
+    // clone keypoints to res_keypoints:
+    vector<KeyPoint> res_keypoints(keypoints);
 
-    //ImageStitcher stitcher;
-
+    // check if the number of detected key points is enough:
+    //while(keypoints.size() < MIN_DETECTED_POINTS) {
+        //cout << "Not enough keypoints detected. (" << keypoints.size() << ")." << endl;
+        //cap >> frame;
+        //if (frame.empty()) {
+            //cerr << "Not enough data read!" << endl;
+            //return 0;
+        //}
+        //keypoints = detectFP(frame);
+    //}
 
     // for every other frame:
     for(;;)
@@ -189,6 +191,7 @@ int main(int argc, char* argv[])
 
         // copy the last frame and keypoints:
         prev_frame = frame.clone();
+        //prev_points = keypoints2points(keypoints);
         prev_points = keypoints2points(keypoints);
 
         // get a new frame from camera
@@ -232,6 +235,14 @@ int main(int argc, char* argv[])
         if (movement.x > frame.cols/4 || movement.y > frame.rows/4) {
             cout << "Summary of movement: " << movement << endl;
             movement = Point2f(0.0, 0.0);
+
+            res_keypoints = detectFP(result);
+            keypoints = detectFP(frame);
+
+            /* zde bude matching bodu
+             * vypocet homografie
+             * image warping
+             * image stitching */
         }
 
         if (homography_points < MIN_HOMOGRAPHY_POINTS || tracked_points < MIN_TRACKED_POINTS) {
@@ -249,21 +260,26 @@ int main(int argc, char* argv[])
             cout << "Summary of movement: " << movement << endl;
             movement = Point2f(0.0, 0.0);
 
-            // detect new keypoints:
+            res_keypoints = detectFP(result);
             keypoints = detectFP(frame);
 
+            /* zde bude matching bodu
+             * vypocet homografie
+             * image warping
+             * image stitching */
+
             // if the number of detected keypoints is less than desired:
-            while(keypoints.size() < MIN_DETECTED_POINTS) {
-                cout << "Not enough keypoints detected. (" << keypoints.size() << ")." << endl;
-                // skip the actual frame, grab another one and detect keypoints on it
-                cap >> frame;
-                if (frame.empty()) {
-                    showResult(result);
-                    return 0;
-                }
-                keypoints = detectFP(frame);
-                //drawKeypoints(frame, keypoints, frame, Scalar(255, 234, 0), DrawMatchesFlags::DRAW_OVER_OUTIMG);
-            }
+            //while(keypoints.size() < MIN_DETECTED_POINTS) {
+                //cout << "Not enough keypoints detected. (" << keypoints.size() << ")." << endl;
+                //// skip the actual frame, grab another one and detect keypoints on it
+                //cap >> frame;
+                //if (frame.empty()) {
+                    //showResult(result);
+                    //return 0;
+                //}
+                //keypoints = detectFP(frame);
+                ////drawKeypoints(frame, keypoints, frame, Scalar(255, 234, 0), DrawMatchesFlags::DRAW_OVER_OUTIMG);
+            //}
             continue;
         }
 
