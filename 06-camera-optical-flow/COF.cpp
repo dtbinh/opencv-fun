@@ -3,14 +3,12 @@
 // only needed in Fedora
 #include <opencv2/nonfree/features2d.hpp>
 
-//#include <unistd.h>
 #include <string>
 #include <iostream>
 
-#include "ImageStitcher.hpp"
+//#include "ImageStitcher.hpp"
 
-#define MIN_TRACKED_POINTS 150
-#define MIN_DETECTED_POINTS 50
+#define MIN_TRACKED_POINTS 120
 #define MIN_HOMOGRAPHY_POINTS 5
 
 using namespace cv;
@@ -145,6 +143,11 @@ int main(int argc, char* argv[])
     vector<KeyPoint> keypoints, prev_keypoints;
     vector <Point2f> points, prev_points;
 
+    Point2f movement;
+
+    std::vector<uchar> mask;
+    Mat H;
+
     // first frame capture:
     cap >> frame;
     if (frame.empty()) {
@@ -152,15 +155,6 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-
-    vector<Point2f> tmp_points;
-    Mat tmp_frame;
-
-    Point2f movement;
-
-    std::vector<uchar> mask;
-    Mat H;
-    Mat H_orig = Mat::ones(3, 3, CV_64FC1);
     Mat result = Mat::zeros(Size(frame.cols*2, frame.rows*2), CV_8UC3);
 
     // put the first frame in the center of the final picture:
@@ -169,17 +163,6 @@ int main(int argc, char* argv[])
     keypoints = detectFP(result);
     // clone keypoints to res_keypoints:
     vector<KeyPoint> res_keypoints(keypoints);
-
-    // check if the number of detected key points is enough:
-    //while(keypoints.size() < MIN_DETECTED_POINTS) {
-        //cout << "Not enough keypoints detected. (" << keypoints.size() << ")." << endl;
-        //cap >> frame;
-        //if (frame.empty()) {
-            //cerr << "Not enough data read!" << endl;
-            //return 0;
-        //}
-        //keypoints = detectFP(frame);
-    //}
 
     // for every other frame:
     for(;;)
@@ -191,7 +174,6 @@ int main(int argc, char* argv[])
 
         // copy the last frame and keypoints:
         prev_frame = frame.clone();
-        //prev_points = keypoints2points(keypoints);
         prev_points = keypoints2points(keypoints);
 
         // get a new frame from camera
@@ -206,13 +188,14 @@ int main(int argc, char* argv[])
 
         H = findHomography(prev_points, points, CV_RANSAC, 3.0, mask);
 
-        // count the number of successfully tracked points
+        // count the number of successfully tracked points:
         for (int i = 0; i < status.size(); i++) {
             if (status.at(i)) {
                 tracked_points++;
             }
         }
 
+        // count the number of inliers:
         for (int i = 0; i < mask.size(); i++) {
             if (mask.at(i)) {
                 homography_points++;
@@ -229,7 +212,6 @@ int main(int argc, char* argv[])
         tmp_x = tmp_x/homography_points;
         tmp_y = tmp_y/homography_points;
         movement += Point2f(tmp_x, tmp_y);
-        //cout << "Posuv ve snimku: " << Point2f(tmp_x, tmp_y) << endl;
 
         // if the movement is larger than 1/4 of the frame size:
         if (movement.x > frame.cols/4 || movement.y > frame.rows/4) {
@@ -268,24 +250,10 @@ int main(int argc, char* argv[])
              * image warping
              * image stitching */
 
-            // if the number of detected keypoints is less than desired:
-            //while(keypoints.size() < MIN_DETECTED_POINTS) {
-                //cout << "Not enough keypoints detected. (" << keypoints.size() << ")." << endl;
-                //// skip the actual frame, grab another one and detect keypoints on it
-                //cap >> frame;
-                //if (frame.empty()) {
-                    //showResult(result);
-                    //return 0;
-                //}
-                //keypoints = detectFP(frame);
-                ////drawKeypoints(frame, keypoints, frame, Scalar(255, 234, 0), DrawMatchesFlags::DRAW_OVER_OUTIMG);
-            //}
             continue;
         }
 
         //warpPerspective(frame, warped_frame, H, frame.size());
-
-        //H_orig *= H;
         //warped_frame.copyTo(result);
 
         keypoints = points2keypoints(points);
@@ -295,35 +263,27 @@ int main(int argc, char* argv[])
             if (status.at(i)) {
                 if (mask.at(i)) {
                     line(frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
-                    line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
-                    //cout << "PREV Point: " << prev_points.at(i) << " => " << points.at(i) <<  " == " << prev_points.at(i) - points.at(i) << endl;
+                    //line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
                 }
                 else {
                     line(frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
-                    line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
+                    //line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
                 }
             }
         }
 
-        //result_next = stitcher.stitchTwoImages(result, frame, H);
-        //result = result_next.clone();
-
         imshow("img", frame);
-        //imshow("img", warped_frame);
-        //imshow("img", result_next);
-
         if(waitKey(30) >= 0) break;
     }
 
     showResult(result);
+
     // the camera will be deinitialized automatically in VideoCapture destructor
     return 0;
 }
 
 //http://www.cs.ucsb.edu/~holl/CS290I/Assignments/Assignments-3/Assignment3Mosaicing.html
 
-// EMAIL:
-
+//EMAIL:
 //warpPerspective(*image, *mosaic, mosaicH, mosaicSize, INTER_LINEAR, BORDER_TRANSPARENT);
-
 //with image being the current video frame, mosaic the bigger mosaic image, and mosaicH the Homography.
