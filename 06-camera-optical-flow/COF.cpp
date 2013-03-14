@@ -388,11 +388,11 @@ int main(int argc, char* argv[])
         for (int i = 0; i < status.size(); i++) {
             if (status.at(i)) {
                 if (mask.at(i)) {
-                    //line(frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
+                    line(frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
                     //line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
                 }
                 else {
-                    //line(frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
+                    line(frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
                     //line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
                 }
             }
