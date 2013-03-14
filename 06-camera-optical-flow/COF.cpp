@@ -6,7 +6,7 @@
 #include <string>
 #include <iostream>
 
-//#include "ImageStitcher.hpp"
+#include "ImageStitcher.hpp"
 
 #define MIN_TRACKED_POINTS 120
 #define MIN_HOMOGRAPHY_POINTS 5
@@ -196,8 +196,8 @@ int main(int argc, char* argv[])
 
     Point2f movement;
 
-    std::vector<uchar> mask;
-    Mat H;
+    vector<uchar> mask;
+    Mat H, H_new;
 
     // first frame capture:
     cap >> frame;
@@ -287,28 +287,35 @@ int main(int argc, char* argv[])
               */
             // Get keypoints from the good matches
 
+            gkp01.clear();
+            gkp02.clear();
             for (int i = 0; i < matches.size(); i++) {
                 gkp01.push_back(res_keypoints[matches[i].queryIdx].pt);
                 gkp02.push_back(keypoints[matches[i].trainIdx].pt);
             }
 
-            // THIS HAS TO GO TO FUNCTION IN ORDER NOT TO MESS UP THE VARIABLES ALREADY USED
-            // TOO SLEEPY TO WORK ON IT NOW ...
-            //mask.clear();
-            //H = findHomography(gkp01, gkp02, CV_RANSAC, 3.0, mask);
+            vector<uchar> gkp_mask;
+            gkp_mask.clear();
+            H_new = findHomography(gkp01, gkp02, CV_RANSAC, 1.0, gkp_mask);
 
-            //// count the number of inliers:
-            //int new_homography_points = 0;
-            //for (int i = 0; i < mask.size(); i++) {
-                //if (mask.at(i)) {
-                    //new_homography_points++;
-                //}
-            //}
+            // count the number of inliers:
+            int new_homography_points = 0;
+            for (int i = 0; i < gkp_mask.size(); i++) {
+                if (gkp_mask.at(i)) {
+                    new_homography_points++;
+                }
+            }
 
-            //cout << "(" << new_homography_points << " po RANSAC)." << endl;
+            cout << "(" << new_homography_points << " po RANSAC)." << endl;
 
              /* image warping
-             * image stitching */
+              */
+            //warpPerspective(frame, result, H_new, result.size(), INTER_LINEAR, BORDER_TRANSPARENT);
+            ImageStitcher stitcher;
+            Mat result_next = stitcher.stitchTwoImages(result, frame, H_new);
+            result = result_next.clone();
+            showResult(result);
+             /* image stitching */
         }
 
         if (homography_points < MIN_HOMOGRAPHY_POINTS || tracked_points < MIN_TRACKED_POINTS) {
@@ -330,9 +337,44 @@ int main(int argc, char* argv[])
             keypoints = detectFP(frame);
 
             /* zde bude matching bodu
-             * vypocet homografie
-             * image warping
-             * image stitching */
+             */
+            matches.clear(); // just to be sure
+            matches = findMatches(result, frame, res_keypoints, keypoints);
+            cout << "Found " << matches.size() << " matches ";
+
+             /* vypocet homografie
+              */
+            // Get keypoints from the good matches
+
+            gkp01.clear();
+            gkp02.clear();
+            for (int i = 0; i < matches.size(); i++) {
+                gkp01.push_back(res_keypoints[matches[i].queryIdx].pt);
+                gkp02.push_back(keypoints[matches[i].trainIdx].pt);
+            }
+
+            vector<uchar> gkp_mask;
+            gkp_mask.clear();
+            H_new = findHomography(gkp01, gkp02, CV_RANSAC, 1.0, gkp_mask);
+
+            // count the number of inliers:
+            int new_homography_points = 0;
+            for (int i = 0; i < gkp_mask.size(); i++) {
+                if (gkp_mask.at(i)) {
+                    new_homography_points++;
+                }
+            }
+
+            cout << "(" << new_homography_points << " po RANSAC)." << endl;
+
+             /* image warping
+              */
+            //warpPerspective(frame, result, H_new, result.size(), INTER_LINEAR, BORDER_TRANSPARENT);
+            ImageStitcher stitcher;
+            Mat result_next = stitcher.stitchTwoImages(result, frame, H_new);
+            result = result_next.clone();
+            showResult(result);
+             /* image stitching */
 
             continue;
         }
@@ -346,11 +388,11 @@ int main(int argc, char* argv[])
         for (int i = 0; i < status.size(); i++) {
             if (status.at(i)) {
                 if (mask.at(i)) {
-                    line(frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
+                    //line(frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
                     //line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,255,0));
                 }
                 else {
-                    line(frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
+                    //line(frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
                     //line(warped_frame, prev_points.at(i), points.at(i), Scalar(0,0,255));
                 }
             }
