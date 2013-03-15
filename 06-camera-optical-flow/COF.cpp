@@ -270,7 +270,7 @@ int main(int argc, char* argv[])
         movement += Point2f(tmp_x, tmp_y);
 
         // if the movement is larger than 1/4 of the frame size:
-        if (movement.x > frame.cols/4 || movement.y > frame.rows/4) {
+        if (movement.x > frame.cols/8 || movement.y > frame.rows/8) {
             cout << "Summary of movement: " << movement << endl;
             movement = Point2f(0.0, 0.0);
 
