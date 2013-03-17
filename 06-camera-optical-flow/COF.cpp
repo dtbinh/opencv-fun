@@ -70,11 +70,14 @@ vector<KeyPoint> points2keypoints(const vector<Point2f>& in)
  */
 vector<KeyPoint> detectFP(Mat frame)
 {
-    int minHessian = 350;
-    SurfFeatureDetector detector(minHessian);
+    //int minHessian = 350;
+    //SurfFeatureDetector detector(minHessian);
+    detector = ORB()
 
     vector<KeyPoint> keypoints;
-    detector.detect(frame, keypoints);
+    //detector.detect(frame, keypoints);
+
+    Mat gray = cvtColor(frame, COLOR_BGR2GRAY);
 
     return keypoints;
 }
