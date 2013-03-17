@@ -2,22 +2,27 @@
 
 import cv2
 import numpy as np
+import copy
 
 from frame import Frame
 
 class Model:
-    ""
+    """
+    Class representing the model of stitched images.
+    """
     def __init__(self, frame=None, debug=False):
+        """
+        Initialises an instance of Model class.
+
+        The initial image is passed here as 'frame' parameter or later using
+        the 'addToModel()' method.
+        """
         self.debug = debug
 
         if frame == None:
             self.model = None
-            self.kp = None
-            self.desc = None
         else:
-            self.model = np.copy(frame.img)
-            self.kp = np.copy(frame.kp)
-            self.desc = np.copy(frame.desc)
+            self.model = copy.deepcopy(frame)
 
         self.act_pos = ((0,0),(0,0),(0,0),(0,0))
 
@@ -26,13 +31,17 @@ class Model:
 
 
     def __del__(self):
-        ""
+        """
+        Removes the instance of Model class.
+        """
         if self.debug:
             print("Model deleted.")
 
 
     def addToModel(self, frame):
-        ""
+        """
+        A method for adding a new frame to the model.
+        """
         if self.debug:
             print("Adding an image to model.")
 

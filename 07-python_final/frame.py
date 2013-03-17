@@ -4,8 +4,13 @@ import cv2
 import numpy as np
 
 class Frame():
-    ""
+    """
+    Class representing the Frame class.
+    """
     def __init__(self, image, debug=False):
+        """
+        Initialises an instance of the Frame class.
+        """
         self.debug = debug
         self.img = image
 
@@ -17,10 +22,15 @@ class Frame():
             print("Frame initialised (debug={}).".format(self.debug))
 
 
-    def detectKeyPoints(self):
-        ""
+    def detectKeyPointsORB(self, nFeatures=4000):
+        """
+        A method used for KeyPoints detection and extraction (using the ORB
+        detector/extractor).
+
+        Returns the number of KeyPoints detected.
+        """
         self.detector = cv2.FeatureDetector_create("ORB")
-        self.detector.setInt("nFeatures", 4000)
+        self.detector.setInt("nFeatures", nFeatures)
         self.extractor = cv2.DescriptorExtractor_create("ORB")
 
         self.grayscale = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
@@ -35,7 +45,11 @@ class Frame():
 
 
     def trackKeyPoints(self, prev_img, prev_kp):
-        ""
+        """
+        A method used for KeyPoints tracking using KLTracker.
+
+        Returns the number of successfully tracked points.
+        """
 
         if self.debug:
             print("Keypoints tracked ({}), displacement: {}.".format(len(self.kp), self.displacement))
@@ -44,12 +58,17 @@ class Frame():
 
 
     def getDisplacement(self):
-        "-- after trackKeyPoints() ..."
-
+        """
+        Returns the calculated displacement after 'trackKeyPoints()' has been
+        successfully called.
+        """
         return self.displacement
 
 
     def __del__(self):
+        """
+        Removes the instance of Frame class.
+        """
         if self.debug:
             print("Frame deleted.")
 
