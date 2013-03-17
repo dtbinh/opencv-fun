@@ -4,9 +4,8 @@ import cv2
 import numpy as np
 
 class Frame():
-
+    ""
     def __init__(self, image, debug=False):
-        ""
         self.debug = debug
         self.img = image
 
