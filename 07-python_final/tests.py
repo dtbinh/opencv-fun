@@ -36,10 +36,22 @@ def TestFeaturesMask():
     ff.showDetectedKeyPoints()
 
 
+def TestFPTracking():
+    i = cv2.imread("../img/s01.jpg")
+    f = Frame(i, True)
+    f.detectKeyPointsORB()
+
+    j = cv2.imread("../img/s02.jpg")
+    g = Frame(j, True)
+    kp = g.trackKeyPoints(f)
+
+    print("{} KP tracked".format(kp))
+
 
 tests_dict = {"TestImread": TestImread,
               "TestFeatures": TestFeatures,
-              "TestFeaturesMask": TestFeaturesMask}
+              "TestFeaturesMask": TestFeaturesMask,
+              "TestFPTracking": TestFPTracking}
 
 
 if __name__ == "__main__":

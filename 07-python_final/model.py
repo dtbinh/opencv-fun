@@ -5,6 +5,7 @@ import numpy as np
 import copy
 
 from frame import Frame
+import common
 
 class Model:
     """
@@ -18,8 +19,6 @@ class Model:
         the 'addToModel()' method.
         """
         self.debug = debug
-
-        #TODO: prepsat Model tak, aby dedil od Frame + prepis implementace
 
         if frame == None:
             self.model = None
@@ -56,3 +55,5 @@ class Model:
         else:
             if self.debug:
                 print("Adding another image to model.")
+
+            #TODO: implement adding another image to the model

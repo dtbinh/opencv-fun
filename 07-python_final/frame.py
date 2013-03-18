@@ -2,6 +2,7 @@
 
 import cv2
 import numpy as np
+import common
 
 class Frame():
     """
@@ -66,12 +67,22 @@ class Frame():
         cv2.destroyAllWindows()
 
 
-    def trackKeyPoints(self, prev_img, prev_kp):
+    def trackKeyPoints(self, prev_frame):
         """
-        A method used for KeyPoints tracking using KLTracker.
+        A method used for KeyPoints tracking using 'calcOpticalFlowPyrLK'.
 
         Returns the number of successfully tracked points.
         """
+        #TODO: implement FP tracking
+
+        prev_p = common.keyPoint2Point(prev_frame.kp)
+        (points, status, err) = cv2.calcOpticalFlowPyrLK(prev_frame.img, self.img, prev_p)
+
+        #TODO: count displacement
+
+        tmp_kp = common.point2Keypoint(points, prev_frame.kp)
+
+        #TODO: take only successfully tracked points (from status)
 
         if self.debug:
             print("Keypoints tracked ({}), displacement: {}.".format(len(self.kp), self.displacement))
