@@ -30,18 +30,18 @@ def TestFeaturesMask():
     #gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     mask = np.zeros(img.shape[:2], np.uint8)
 
-    mask[0:300, 0:300] = 1
+    mask[200:500, 0:300] = 1
 
     kp = ff.detectKeyPointsORB(mask=mask)
     ff.showDetectedKeyPoints()
 
 
 def TestFPTracking():
-    i = cv2.imread("../img/s01.jpg")
+    i = cv2.imread("../img/m01.jpg")
     f = Frame(i, True)
     f.detectKeyPointsORB()
 
-    j = cv2.imread("../img/s02.jpg")
+    j = cv2.imread("../img/m02.jpg")
     g = Frame(j, True)
     kp = g.trackKeyPoints(f)
 
