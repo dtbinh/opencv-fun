@@ -38,7 +38,8 @@ def filterGoodKeyPoints(prev_frame, frame):
 
     Returns 'good_matches'.
     """
-    matcher = cv2.DescriptorMatcher_create("BruteForce-Hamming")
+    matcher = cv2.DescriptorMatcher_create("BruteForce")
+    print("Prev: {}, current: {}".format(len(prev_frame.desc), len(frame.desc)))
     matches = matcher.match(prev_frame.desc, frame.desc)
 
     print '#matches:', len(matches)
@@ -49,7 +50,7 @@ def filterGoodKeyPoints(prev_frame, frame):
     print 'distance: max: %.3f' % max(dist)
 
     # threshold: half the mean
-    thres_dist = (sum(dist) / len(dist)) * 0.6
+    thres_dist = (sum(dist) / len(dist)) * 0.5
 
     # keep only the reasonable matches
     good_matches = [m for m in matches if m.distance < thres_dist]
@@ -81,5 +82,11 @@ def findHomographyMatrix(prev_frame, frame, good_matches):
     print '%d / %d inliers/matched' % (np.sum(status), len(status))
     # do not draw outliers (there will be a lot of them)
     kp_pairs = [matches for matches, flag in zip(good_matches, status) if flag]
+
+    #prev_gkp = []
+    #gkp = []
+    #for m in kp_pairs:
+        #prev_gkp.append(prev_frame.kp[m.queryIdx])
+        #gkp.append(frame.kp[m.trainIdx])
 
     return H

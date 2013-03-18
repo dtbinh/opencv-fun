@@ -15,6 +15,7 @@ class Frame():
         Initialises an instance of the Frame class.
         """
         self.detector = cv2.SURF(350)
+        self.extractor = cv2.DescriptorExtractor_create("SURF")
 
         self.debug = debug
         self.img = image
@@ -83,6 +84,7 @@ class Frame():
         Returns the number of successfully tracked points.
         """
         #TODO: check if the results of displacement are real
+        #TODO: reimplement the displacement computation!
 
         prev_p = common.keyPoint2Point(prev_frame.kp)
         (points, status, err) = cv2.calcOpticalFlowPyrLK(prev_frame.img, self.img, prev_p)
@@ -93,13 +95,13 @@ class Frame():
         prev_kp = [kp for kp, flag in zip(prev_frame.kp, status) if flag]
         self.kp = [kp for kp, flag in zip(tmp_kp, status) if flag]
         # filter out descriptors of untracked KP:
-        #(self.kp, self.desc) = self.extractor.compute(self.grayscale, self.kp)
-
+        self.kp, self.desc = self.extractor.compute(self.img, self.kp)
+        prev_frame.kp, prev_frame.desc = prev_frame.extractor.compute(prev_frame.img, prev_frame.kp)
 
         good_matches = common.filterGoodKeyPoints(prev_frame, self)
         H = common.findHomographyMatrix(prev_frame, self, good_matches)
 
-        self.displacement = self._calcAvgDisplacement(prev_kp, self.kp)
+        self.displacement = self._calcAvgDisplacement(prev_frame.kp, self.kp)
 
         if self.debug:
             print("Keypoints tracked ({}), displacement: {}.".format(len(self.kp), self.displacement))
