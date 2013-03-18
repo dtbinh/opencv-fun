@@ -19,6 +19,8 @@ class Model:
         """
         self.debug = debug
 
+        #TODO: prepsat Model tak, aby dedil od Frame + prepis implementace
+
         if frame == None:
             self.model = None
         else:

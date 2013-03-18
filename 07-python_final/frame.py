@@ -22,13 +22,16 @@ class Frame():
             print("Frame initialised (debug={}).".format(self.debug))
 
 
-    def detectKeyPointsORB(self, nFeatures=4000):
+    def detectKeyPointsORB(self, nFeatures=4000, mask=None):
         """
         A method used for KeyPoints detection and extraction (using the ORB
         detector/extractor).
 
         Returns the number of KeyPoints detected.
         """
+
+        #TODO: otestovat funkcnost masky + implementace
+
         self.detector = cv2.FeatureDetector_create("ORB")
         self.detector.setInt("nFeatures", nFeatures)
         self.extractor = cv2.DescriptorExtractor_create("ORB")
