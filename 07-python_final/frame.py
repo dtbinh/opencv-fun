@@ -14,8 +14,7 @@ class Frame():
         """
         Initialises an instance of the Frame class.
         """
-        self.detector = cv2.FeatureDetector_create("ORB")
-        self.extractor = cv2.DescriptorExtractor_create("ORB")
+        self.detector = cv2.SURF(350)
 
         self.debug = debug
         self.img = image
@@ -30,23 +29,17 @@ class Frame():
             print("Frame initialised (debug={}).".format(self.debug))
 
 
-    def detectKeyPointsORB(self, nFeatures=1000, mask=None):
+    def detectKeyPoints(self, mask=None):
         """
-        A method used for KeyPoints detection and extraction (using the ORB
+        A method used for KeyPoints detection and extraction (using the SURF
         detector/extractor).
 
         Returns the number of KeyPoints detected.
         """
-        self.detector.setInt("nFeatures", nFeatures)
-        self.detector.setInt("edgeThreshold", 4)
-        self.detector.setInt("patchSize", 4)
-
         if mask == None:
-            self.kp = self.detector.detect(self.grayscale)
-        else:
-            self.kp = self.detector.detect(self.grayscale, mask)
+            mask = np.ones(self.img.shape[:2], np.uint8)
 
-        (self.kp, self.desc) = self.extractor.compute(self.grayscale, self.kp)
+        (self.kp, self.desc) = self.detector.detectAndCompute(self.grayscale, mask)
 
         if self.debug:
             print("Keypoints detected ({}) and descriptors extracted.".format(len(self.kp)))
@@ -58,8 +51,7 @@ class Frame():
         """
         Displays an image with detected KeyPoints.
         """
-        gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
-        gray = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+        gray = cv2.cvtColor(self.grayscale, cv2.COLOR_GRAY2BGR)
 
         for i in range(len(self.kp)):
             x,y = self.kp[i].pt
@@ -101,7 +93,7 @@ class Frame():
         prev_kp = [kp for kp, flag in zip(prev_frame.kp, status) if flag]
         self.kp = [kp for kp, flag in zip(tmp_kp, status) if flag]
         # filter out descriptors of untracked KP:
-        (self.kp, self.desc) = self.extractor.compute(self.grayscale, self.kp)
+        #(self.kp, self.desc) = self.extractor.compute(self.grayscale, self.kp)
 
 
         good_matches = common.filterGoodKeyPoints(prev_frame, self)
