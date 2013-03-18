@@ -30,21 +30,40 @@ class Frame():
         Returns the number of KeyPoints detected.
         """
 
-        #TODO: otestovat funkcnost masky + implementace
-
         self.detector = cv2.FeatureDetector_create("ORB")
         self.detector.setInt("nFeatures", nFeatures)
         self.extractor = cv2.DescriptorExtractor_create("ORB")
 
         self.grayscale = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
 
-        self.kp = self.detector.detect(self.grayscale)
+        if mask == None:
+            self.kp = self.detector.detect(self.grayscale)
+        else:
+            self.kp = self.detector.detect(self.grayscale, mask)
+
         (self.kp, self.desc) = self.extractor.compute(self.grayscale, self.kp)
 
         if self.debug:
             print("Keypoints detected ({}) and descriptors extracted.".format(len(self.kp)))
 
         return len(self.kp)
+
+
+    def showDetectedKeyPoints(self):
+        """
+        Displays an image with detected KeyPoints.
+        """
+        gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+
+        for i in range(len(self.kp)):
+            x,y = self.kp[i].pt
+            center = (int(x), int(y))
+            cv2.circle(gray, center, 2, (0,128,255), -1)
+
+        cv2.imshow("KeyPoints", gray)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
 
     def trackKeyPoints(self, prev_img, prev_kp):
