@@ -2,6 +2,7 @@
 
 import numpy as np
 from frame import Frame
+from model import Model
 import cv2
 import copy
 
@@ -12,19 +13,22 @@ class Compositor:
     processing them and putting them together in the Model instance.
     """
 
-    def __init__(self, video_source=0, debug=False):
+    def __init__(self, video_source=0, rt_result=True, debug=False):
         """
         Initialises an instance of Compositor class.
 
         Parameter video_source can be number of video device or filename of
         a video file.
         """
+        self.rt_result = rt_result
         self.debug = debug
         self.cap = cv2.VideoCapture(video_source);
         # TODO: Check if video stream is open (cap.isOpen())
 
         self.frame = self.grabNextFrame()
         self.prev_frame = None
+
+        self.model = Model(None, self.debug)
 
 
     def grabNextFrame(self):
@@ -48,6 +52,8 @@ class Compositor:
         created and further processed.
         """
         # Process first frame first:
+
+        # TODO: process operations on the first frame (KP detection)
         self.frame.detectKeyPoints()
 
         # TODO: fix the loop when grabNextFrame is an iterator
@@ -63,5 +69,10 @@ class Compositor:
                 if cv2.waitKey(30) >= 0:
                     cv2.destroyWindow("DEBUG")
                     break
+
+            # TODO:
+            #    operations on frame (KP tracking)
+            #    movement direction (implemented elsewhere)
+            #    return selected key frames => add into model ...
 
         # .... (to be finished)
