@@ -2,7 +2,7 @@
 
 import numpy as np
 import cv2
-import copy
+
 
 def keyPoint2Point(kp):
     """
@@ -14,7 +14,7 @@ def keyPoint2Point(kp):
     return np.array([p.pt for p in kp], np.float32)
 
 
-def point2Keypoint(points, prev_kp=None, kp_size=31):
+def point2Keypoint(points, prev_kp=None, kp_size=1):
     """
     A helping function for conversion from Point representation to KeyPoint.
 
@@ -32,9 +32,26 @@ def point2Keypoint(points, prev_kp=None, kp_size=31):
     return kp
 
 
-def filterGoodKeyPoints(prev_frame, frame):
+def extractGoodKP(prev_frame, frame, good_matches):
     """
-    Filters KeyPoints to only Good KeyPoints.
+    Extracts Good KeyPoints from previously found Good Matches.
+
+    Returns tuple (previous_good_KP, good_KP).
+    """
+    prev_gkp = []
+    gkp = []
+    for i in range(len(good_matches)):
+        prev_gkp.append(prev_frame.kp[good_matches[i].queryIdx])
+        gkp.append(frame.kp[good_matches[i].trainIdx])
+
+    print "GKP01/02: ", len(prev_gkp), len(gkp)
+
+    return (prev_gkp, gkp)
+
+
+def findGoodMatches(prev_frame, frame):
+    """
+    Finds good matches of previously detected KeyPoints.
 
     Returns 'good_matches'.
     """
@@ -55,22 +72,10 @@ def filterGoodKeyPoints(prev_frame, frame):
     # keep only the reasonable matches
     good_matches = [m for m in matches if m.distance < thres_dist]
 
-    print '#selected matches:', len(good_matches)
-    prev_gkp = []
-    gkp = []
-    for i in range(len(good_matches)):
-        prev_gkp.append(prev_frame.kp[good_matches[i].queryIdx])
-        gkp.append(frame.kp[good_matches[i].trainIdx])
-
-    print "GKP01/02: ", len(prev_gkp), len(gkp)
-
-    prev_frame.kp = copy.copy(prev_gkp)
-    frame.kp = copy.copy(gkp)
-
     return good_matches
 
 
-def findHomographyMatrix(prev_frame, frame, good_matches):
+def filterKPUsingHomography(prev_frame, frame):
     """
     Returns a homography matrix. 'good_matches' are to be obtained by running
     'filterGoodKeyPoints() function'.
@@ -78,15 +83,12 @@ def findHomographyMatrix(prev_frame, frame, good_matches):
     prev_points = keyPoint2Point(prev_frame.kp)
     points = keyPoint2Point(frame.kp)
 
-    H, status = cv2.findHomography(prev_points, points, cv2.RANSAC, 1.0)
+    H, status = cv2.findHomography(prev_points, points, cv2.RANSAC, 3.0)
     print '%d / %d inliers/matched' % (np.sum(status), len(status))
-    # do not draw outliers (there will be a lot of them)
-    kp_pairs = [matches for matches, flag in zip(good_matches, status) if flag]
 
-    #prev_gkp = []
-    #gkp = []
-    #for m in kp_pairs:
-        #prev_gkp.append(prev_frame.kp[m.queryIdx])
-        #gkp.append(frame.kp[m.trainIdx])
+    prev_gkp = []
+    gkp = []
+    prev_gkp = [kp for kp, flag in zip(prev_frame.kp, status) if flag]
+    gkp = [kp for kp, flag in zip(frame.kp, status) if flag]
 
-    return H
+    return (prev_gkp, gkp)

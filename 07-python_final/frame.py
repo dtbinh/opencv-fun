@@ -3,8 +3,8 @@
 import cv2
 import numpy as np
 import common
+import copy
 
-#TODO: rewrite to use SURF detector and descriptor instead of ORB
 
 class Frame():
     """
@@ -68,11 +68,20 @@ class Frame():
         """
         Calculates average displacement of two sets of KeyPoints.
         """
+        # TODO: If values differ too much:
+        #         * filter out such values
+        #         * abort and detect KP
+
         ds_x = []
         ds_y = []
         for i in range(len(kp)):
             ds_x.append(kp[i].pt[0] - prev_kp[i].pt[0])
             ds_y.append(kp[i].pt[1] - prev_kp[i].pt[1])
+
+        print("DS_X:\n")
+        print(ds_x)
+        print("DS_Y:\n")
+        print(ds_y)
 
         return (sum(ds_x)/len(ds_x), sum(ds_y)/len(ds_y))
 
@@ -83,8 +92,6 @@ class Frame():
 
         Returns the number of successfully tracked points.
         """
-        #TODO: check if the results of displacement are real
-        #TODO: reimplement the displacement computation!
 
         prev_p = common.keyPoint2Point(prev_frame.kp)
         (points, status, err) = cv2.calcOpticalFlowPyrLK(prev_frame.img, self.img, prev_p)
@@ -94,18 +101,33 @@ class Frame():
         # filter out untracked points:
         prev_kp = [kp for kp, flag in zip(prev_frame.kp, status) if flag]
         self.kp = [kp for kp, flag in zip(tmp_kp, status) if flag]
+
         # filter out descriptors of untracked KP:
         self.kp, self.desc = self.extractor.compute(self.img, self.kp)
         prev_frame.kp, prev_frame.desc = prev_frame.extractor.compute(prev_frame.img, prev_frame.kp)
 
-        good_matches = common.filterGoodKeyPoints(prev_frame, self)
-        H = common.findHomographyMatrix(prev_frame, self, good_matches)
+        # find good matches only:
+        good_matches = common.findGoodMatches(prev_frame, self)
+        (prev_gkp, gkp) = common.extractGoodKP(prev_frame, self, good_matches)
 
+        prev_frame.kp = copy.copy(prev_gkp)
+        self.kp = copy.copy(gkp)
+
+        # filter KeyPoints using Homography matrix with RANSAC computation:
+        (prev_gkp, gkp) = common.filterKPUsingHomography(prev_frame, self)
+
+        prev_frame.kp = copy.copy(prev_gkp)
+        self.kp = copy.copy(gkp)
+
+        # filter out descriptors of unsuitable KP:
+        self.kp, self.desc = self.extractor.compute(self.img, self.kp)
+        prev_frame.kp, prev_frame.desc = prev_frame.extractor.compute(prev_frame.img, prev_frame.kp)
+
+        # calculate displacement
         self.displacement = self._calcAvgDisplacement(prev_frame.kp, self.kp)
 
         if self.debug:
             print("Keypoints tracked ({}), displacement: {}.".format(len(self.kp), self.displacement))
-            print("Homography matrix: {}".format(H))
 
         return len(self.kp)
 
