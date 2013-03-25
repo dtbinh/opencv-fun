@@ -5,6 +5,7 @@ import numpy as np
 
 from frame import Frame
 from model import Model
+from compositor import Compositor
 
 def TestImread(img_file="../img/s01.jpg"):
     img = cv2.imread(img_file)
@@ -46,10 +47,16 @@ def TestFPTracking():
     kp = g.trackKeyPoints(f)
 
 
+def TestCompositor():
+    compositor = Compositor("../img/video/foglab3.mov", True)
+    compositor.run()
+
+
 tests_dict = {"TestImread": TestImread,
               "TestFeatures": TestFeatures,
               "TestFeaturesMask": TestFeaturesMask,
-              "TestFPTracking": TestFPTracking}
+              "TestFPTracking": TestFPTracking,
+              "TestCompositor": TestCompositor}
 
 
 if __name__ == "__main__":

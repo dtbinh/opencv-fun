@@ -33,12 +33,12 @@ class Compositor:
         created Frame object using the image previously read.
         """
         # TODO: Rewrite as a iterator class !!!
-        ret, img = cap.read()
+        ret, img = self.cap.read()
 
         if not ret:
             return None
 
-        return Frame(img, self.debug)
+        return Frame(img, False)
 
 
     def run(self):
@@ -51,8 +51,17 @@ class Compositor:
         self.frame.detectKeyPoints()
 
         # TODO: fix the loop when grabNextFrame is an iterator
-        while (self.frame != None):
+        while True:
             self.prev_frame = copy.deepcopy(self.frame)
             self.frame = self.grabNextFrame()
+
+            if self.frame == None:
+                break
+
+            if self.debug:
+                cv2.imshow("DEBUG", self.frame.img)
+                if cv2.waitKey(30) >= 0:
+                    cv2.destroyWindow("DEBUG")
+                    break
 
         # .... (to be finished)
