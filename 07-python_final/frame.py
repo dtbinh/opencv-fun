@@ -78,11 +78,6 @@ class Frame():
             ds_x.append(kp[i].pt[0] - prev_kp[i].pt[0])
             ds_y.append(kp[i].pt[1] - prev_kp[i].pt[1])
 
-        print("DS_X:\n")
-        print(ds_x)
-        print("DS_Y:\n")
-        print(ds_y)
-
         return (sum(ds_x)/len(ds_x), sum(ds_y)/len(ds_y))
 
 

@@ -45,8 +45,6 @@ def TestFPTracking():
     g = Frame(j, True)
     kp = g.trackKeyPoints(f)
 
-    print("{} KP tracked".format(kp))
-
 
 tests_dict = {"TestImread": TestImread,
               "TestFeatures": TestFeatures,

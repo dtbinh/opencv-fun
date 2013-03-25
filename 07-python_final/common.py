@@ -44,7 +44,8 @@ def extractGoodKP(prev_frame, frame, good_matches):
         prev_gkp.append(prev_frame.kp[good_matches[i].queryIdx])
         gkp.append(frame.kp[good_matches[i].trainIdx])
 
-    print "GKP01/02: ", len(prev_gkp), len(gkp)
+    if frame.debug:
+        print("Good keypoints found: {}".format(len(gkp)))
 
     return (prev_gkp, gkp)
 
@@ -56,15 +57,9 @@ def findGoodMatches(prev_frame, frame):
     Returns 'good_matches'.
     """
     matcher = cv2.DescriptorMatcher_create("BruteForce")
-    print("Prev: {}, current: {}".format(len(prev_frame.desc), len(frame.desc)))
     matches = matcher.match(prev_frame.desc, frame.desc)
 
-    print '#matches:', len(matches)
     dist = [m.distance for m in matches]
-
-    print 'distance: min: %.3f' % min(dist)
-    print 'distance: mean: %.3f' % (sum(dist) / len(dist))
-    print 'distance: max: %.3f' % max(dist)
 
     # threshold: half the mean
     thres_dist = (sum(dist) / len(dist)) * 0.5
@@ -84,7 +79,9 @@ def filterKPUsingHomography(prev_frame, frame):
     points = keyPoint2Point(frame.kp)
 
     H, status = cv2.findHomography(prev_points, points, cv2.RANSAC, 3.0)
-    print '%d / %d inliers/matched' % (np.sum(status), len(status))
+
+    if frame.debug:
+        print("After homography: {}/{} inliers/matched".format(np.sum(status), len(status)))
 
     prev_gkp = []
     gkp = []
