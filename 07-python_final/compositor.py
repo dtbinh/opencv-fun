@@ -24,7 +24,10 @@ class Compositor:
         self.rt_result = rt_result
         self.debug = debug
         self.cap = cv2.VideoCapture(video_source);
-        # TODO: Check if video stream is open (cap.isOpen())
+        # TODO: Check if video stream is open (cap.isOpened())
+        if not self.cap.isOpened():
+            print("Could not open: {}".format(video_source))
+            exit()
 
         self.frame = self.grabNextFrame()
         self.prev_frame = None
@@ -88,7 +91,10 @@ class Compositor:
             # TODO: fix this condition!
             #       use threshold counted from the size of frame
             #       defined elsewhere (settings class?)
-            if tracked == None or abs(movement_sum[0]) > 100 or abs(movement_sum[1] > 100):
+            if tracked == None:
+                continue
+
+            if abs(movement_sum[0]) > 150 or abs(movement_sum[1] > 150) or tracked < 50:
                 self.addFrameToModel(movement_sum)
                 movement_sum = (0.0, 0.0)
                 continue
@@ -102,8 +108,8 @@ class Compositor:
                     break
 
 
-        if self.debug:
-            print("Total movement: {}".format(movement_sum))
+        #if self.debug:
+            #print("Total movement: {}".format(movement_sum))
 
             # TODO:
             #    operations on frame (KP tracking)

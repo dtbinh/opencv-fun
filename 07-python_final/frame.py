@@ -98,9 +98,17 @@ class Frame():
         prev_kp = [kp for kp, flag in zip(prev_frame.kp, status) if flag]
         self.kp = [kp for kp, flag in zip(tmp_kp, status) if flag]
 
+        #print("LEN (line 101): {}/{}!".format(len(prev_kp), len(self.kp)))
+
         # filter out descriptors of untracked KP:
         self.kp, self.desc = self.extractor.compute(self.img, self.kp)
-        prev_frame.kp, prev_frame.desc = prev_frame.extractor.compute(prev_frame.img, prev_frame.kp)
+        prev_frame.kp, prev_frame.desc = prev_frame.extractor.compute(prev_frame.img, prev_kp)
+
+        if len(self.desc) != len(prev_frame.desc):
+            print("LEN DIFFERS (line 109): {}/{}!".format(len(prev_frame.desc), len(self.desc)))
+
+        if len(self.kp) != len(prev_frame.kp):
+            print("LEN DIFFERS (line 112): {}/{}!".format(len(prev_frame.kp), len(self.kp)))
 
         # find good matches only:
         #good_matches = common.findGoodMatches(prev_frame, self)
