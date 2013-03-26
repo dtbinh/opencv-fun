@@ -35,7 +35,7 @@ class Compositor:
         Function reads next image from video capture device/file and returns
         created Frame object using the image previously read.
         """
-        # TODO: Rewrite as a iterator class !!!
+        # TODO: Rewrite as a iterator class !!! (???)
         ret, img = self.cap.read()
 
         if not ret:
@@ -51,15 +51,14 @@ class Compositor:
         created and further processed.
         """
         # Process first frame first:
-
-        # TODO: process operations on the first frame (KP detection)
         self.frame.detectKeyPoints()
         Compositor.model.add(self.frame)
 
-        if self.debug:
-            movement_sum = (0.0, 0.0)
+        movement_sum = (0.0, 0.0)
 
         # TODO: fix the loop when grabNextFrame is an iterator
+        #       or
+        #       put condition like while movement_sum < threshold and len(KP) > xx ...
         while True:
             #self.prev_frame = copy.deepcopy(self.frame)
             self.prev_frame = self.frame
@@ -74,11 +73,9 @@ class Compositor:
                     cv2.destroyWindow("DEBUG")
                     break
 
-            self.frame.trackKeyPoints(self.prev_frame) # this causes segfault!
+            self.frame.trackKeyPoints(self.prev_frame)
 
-            if self.debug:
-                movement_sum = tuple(sum(item) for item in zip(movement_sum, self.frame.getDisplacement()))
-                #movement_sum += self.frame.getDisplacement()
+            movement_sum = tuple(sum(item) for item in zip(movement_sum, self.frame.getDisplacement()))
 
         if self.debug:
             print("Total movement: {}".format(movement_sum))
