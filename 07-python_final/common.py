@@ -78,6 +78,8 @@ def filterKPUsingHomography(prev_frame, frame):
     prev_points = keyPoint2Point(prev_frame.kp)
     points = keyPoint2Point(frame.kp)
 
+    #TODO: Check if the numer of points is sufficient for homography computation !!!
+
     H, status = cv2.findHomography(prev_points, points, cv2.RANSAC, 3.0)
 
     if frame.debug:

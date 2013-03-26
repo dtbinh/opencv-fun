@@ -102,11 +102,11 @@ class Frame():
         prev_frame.kp, prev_frame.desc = prev_frame.extractor.compute(prev_frame.img, prev_frame.kp)
 
         # find good matches only:
-        good_matches = common.findGoodMatches(prev_frame, self)
-        (prev_gkp, gkp) = common.extractGoodKP(prev_frame, self, good_matches)
+        #good_matches = common.findGoodMatches(prev_frame, self)
+        #(prev_gkp, gkp) = common.extractGoodKP(prev_frame, self, good_matches)
 
-        prev_frame.kp = copy.copy(prev_gkp)
-        self.kp = copy.copy(gkp)
+        #prev_frame.kp = copy.copy(prev_gkp)
+        #self.kp = copy.copy(gkp)
 
         # filter KeyPoints using Homography matrix with RANSAC computation:
         (prev_gkp, gkp) = common.filterKPUsingHomography(prev_frame, self)

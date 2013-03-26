@@ -16,7 +16,7 @@ class Model:
         Initialises an instance of Model class.
 
         The initial image is passed here as 'frame' parameter or later using
-        the 'addToModel()' method.
+        the 'add()' method.
         """
         self.debug = debug
 
@@ -39,7 +39,7 @@ class Model:
             print("Model deleted.")
 
 
-    def addToModel(self, frame):
+    def add(self, frame):
         """
         A method for adding a new frame to the model.
         """

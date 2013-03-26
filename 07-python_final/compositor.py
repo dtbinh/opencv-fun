@@ -12,6 +12,7 @@ class Compositor:
     Class representing the Compositor object that takes care of taking frames,
     processing them and putting them together in the Model instance.
     """
+    model = Model(None, debug=True)
 
     def __init__(self, video_source=0, rt_result=True, debug=False):
         """
@@ -28,8 +29,6 @@ class Compositor:
         self.frame = self.grabNextFrame()
         self.prev_frame = None
 
-        self.model = Model(None, self.debug)
-
 
     def grabNextFrame(self):
         """
@@ -42,7 +41,7 @@ class Compositor:
         if not ret:
             return None
 
-        return Frame(img, False)
+        return Frame(img, True)
 
 
     def run(self):
@@ -55,10 +54,15 @@ class Compositor:
 
         # TODO: process operations on the first frame (KP detection)
         self.frame.detectKeyPoints()
+        Compositor.model.add(self.frame)
+
+        if self.debug:
+            movement_sum = (0.0, 0.0)
 
         # TODO: fix the loop when grabNextFrame is an iterator
         while True:
-            self.prev_frame = copy.deepcopy(self.frame)
+            #self.prev_frame = copy.deepcopy(self.frame)
+            self.prev_frame = self.frame
             self.frame = self.grabNextFrame()
 
             if self.frame == None:
@@ -69,6 +73,15 @@ class Compositor:
                 if cv2.waitKey(30) >= 0:
                     cv2.destroyWindow("DEBUG")
                     break
+
+            self.frame.trackKeyPoints(self.prev_frame) # this causes segfault!
+
+            if self.debug:
+                movement_sum = tuple(sum(item) for item in zip(movement_sum, self.frame.getDisplacement()))
+                #movement_sum += self.frame.getDisplacement()
+
+        if self.debug:
+            print("Total movement: {}".format(movement_sum))
 
             # TODO:
             #    operations on frame (KP tracking)
