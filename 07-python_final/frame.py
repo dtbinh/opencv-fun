@@ -112,6 +112,9 @@ class Frame():
         # filter KeyPoints using Homography matrix with RANSAC computation:
         (prev_gkp, gkp) = common.filterKPUsingHomography(prev_frame, self)
 
+        if prev_gkp == None or gkp == None:
+            return None
+
         prev_frame.kp = copy.copy(prev_gkp)
         self.kp = copy.copy(gkp)
 

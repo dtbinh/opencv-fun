@@ -80,6 +80,15 @@ def filterKPUsingHomography(prev_frame, frame):
 
     #TODO: Check if the numer of points is sufficient for homography computation !!!
 
+    if frame.debug:
+        print("About to compute homography out of {} and {} points.".format(len(prev_points), len(points)))
+
+    # TODO: sort this out later ...
+    #       why does the length sometimes differ?
+    if len(prev_points) != len(points):
+    #or len(prev_points) < 100:
+        return (None, None)
+
     H, status = cv2.findHomography(prev_points, points, cv2.RANSAC, 3.0)
 
     if frame.debug:

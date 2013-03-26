@@ -41,7 +41,19 @@ class Compositor:
         if not ret:
             return None
 
-        return Frame(img, True)
+        return Frame(img, False)
+
+
+    def addFrameToModel(self, movement=(0.0, 0.0)):
+        """
+        Function takes a frame instance and its movement coords and calls
+        the appropriate Model methods in order to add the frame to it.
+        """
+        # TODO: implement addToModel()
+        #       detect new KeyPoints + add to the model
+        self.frame.detectKeyPoints()
+        if self.debug:
+            print("Adding the frame to Model with movement: {}".format(movement))
 
 
     def run(self):
@@ -51,8 +63,9 @@ class Compositor:
         created and further processed.
         """
         # Process first frame first:
-        self.frame.detectKeyPoints()
-        Compositor.model.add(self.frame)
+        #self.frame.detectKeyPoints()
+        #Compositor.model.add(self.frame)
+        self.addFrameToModel()
 
         movement_sum = (0.0, 0.0)
 
@@ -65,7 +78,22 @@ class Compositor:
             self.frame = self.grabNextFrame()
 
             if self.frame == None:
+                # add the last frame to the Model:
+                self.frame = self.prev_frame
+                self.addFrameToModel(movement_sum)
                 break
+
+            tracked = self.frame.trackKeyPoints(self.prev_frame)
+
+            # TODO: fix this condition!
+            #       use threshold counted from the size of frame
+            #       defined elsewhere (settings class?)
+            if tracked == None or abs(movement_sum[0]) > 100 or abs(movement_sum[1] > 100):
+                self.addFrameToModel(movement_sum)
+                movement_sum = (0.0, 0.0)
+                continue
+
+            movement_sum = tuple(sum(item) for item in zip(movement_sum, self.frame.getDisplacement()))
 
             if self.debug:
                 cv2.imshow("DEBUG", self.frame.img)
@@ -73,9 +101,6 @@ class Compositor:
                     cv2.destroyWindow("DEBUG")
                     break
 
-            self.frame.trackKeyPoints(self.prev_frame)
-
-            movement_sum = tuple(sum(item) for item in zip(movement_sum, self.frame.getDisplacement()))
 
         if self.debug:
             print("Total movement: {}".format(movement_sum))
