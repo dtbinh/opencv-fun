@@ -39,13 +39,10 @@ class Model:
             print("Model deleted.")
 
 
-    def add(self, frame):
+    def add(self, frame, movement):
         """
         A method for adding a new frame to the model.
         """
-        if self.debug:
-            print("Adding an image to model.")
-
         if self.model == None:
             if self.debug:
                 print("Adding first image to model.")

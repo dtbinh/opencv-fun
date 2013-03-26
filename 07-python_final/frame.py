@@ -15,13 +15,11 @@ class Frame():
         Initialises an instance of the Frame class.
         """
         # TODO: experiment with the SURF() value to get better results faster
-        self.detector = cv2.SURF(350)
+        self.detector = cv2.SURF(350) # TODO: SETTINGS
         self.extractor = cv2.DescriptorExtractor_create("SURF")
 
         self.debug = debug
         self.img = image
-
-        self.grayscale = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
 
         self.kp = None
         self.desc = None
@@ -41,6 +39,8 @@ class Frame():
         if mask == None:
             mask = np.ones(self.img.shape[:2], np.uint8)
 
+        # TODO: do we need grayscale?
+        self.grayscale = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
         (self.kp, self.desc) = self.detector.detectAndCompute(self.grayscale, mask)
 
         if self.debug:
@@ -104,11 +104,11 @@ class Frame():
         self.kp, self.desc = self.extractor.compute(self.img, self.kp)
         prev_frame.kp, prev_frame.desc = prev_frame.extractor.compute(prev_frame.img, prev_kp)
 
-        if len(self.desc) != len(prev_frame.desc):
-            print("LEN DIFFERS (line 109): {}/{}!".format(len(prev_frame.desc), len(self.desc)))
+        #if len(self.desc) != len(prev_frame.desc):
+            #print("LEN DIFFERS (line 109): {}/{}!".format(len(prev_frame.desc), len(self.desc)))
 
-        if len(self.kp) != len(prev_frame.kp):
-            print("LEN DIFFERS (line 112): {}/{}!".format(len(prev_frame.kp), len(self.kp)))
+        #if len(self.kp) != len(prev_frame.kp):
+            #print("LEN DIFFERS (line 112): {}/{}!".format(len(prev_frame.kp), len(self.kp)))
 
         # find good matches only:
         #good_matches = common.findGoodMatches(prev_frame, self)
@@ -139,6 +139,7 @@ class Frame():
         return len(self.kp)
 
 
+    # TODO: do we need this function at all?
     def getDisplacement(self):
         """
         Returns the calculated displacement after 'trackKeyPoints()' has been

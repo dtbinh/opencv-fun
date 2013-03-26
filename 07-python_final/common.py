@@ -62,7 +62,7 @@ def findGoodMatches(prev_frame, frame):
     dist = [m.distance for m in matches]
 
     # threshold: half the mean
-    thres_dist = (sum(dist) / len(dist)) * 0.5
+    thres_dist = (sum(dist) / len(dist)) * 0.5 # TODO: SETTINGS
 
     # keep only the reasonable matches
     good_matches = [m for m in matches if m.distance < thres_dist]
@@ -78,9 +78,6 @@ def filterKPUsingHomography(prev_frame, frame):
     prev_points = keyPoint2Point(prev_frame.kp)
     points = keyPoint2Point(frame.kp)
 
-    if len(prev_frame.kp) != len(frame.kp):
-        print("LEN DIFFERS (line 82): {}/{}!".format(len(prev_frame.kp), len(frame.kp)))
-
     #TODO: Check if the numer of points is sufficient for homography computation !!!
 
     if frame.debug:
@@ -90,13 +87,9 @@ def filterKPUsingHomography(prev_frame, frame):
     #       why does the length sometimes differ?
     if len(prev_points) != len(points):
         print("LEN DIFFERS (line 92): {}/{}!".format(len(prev_points), len(points)))
-    ##or len(prev_points) < 100:
         return (None, None)
 
-    #if len(prev_points) < 100:
-        #return (None, None)
-
-    H, status = cv2.findHomography(prev_points, points, cv2.RANSAC, 3.0)
+    H, status = cv2.findHomography(prev_points, points, cv2.RANSAC, 3.0) # TODO: SETTINGS
 
     if frame.debug:
         print("After homography: {}/{} inliers/matched".format(np.sum(status), len(status)))

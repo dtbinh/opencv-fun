@@ -24,7 +24,7 @@ class Compositor:
         self.rt_result = rt_result
         self.debug = debug
         self.cap = cv2.VideoCapture(video_source);
-        # TODO: Check if video stream is open (cap.isOpened())
+        # TODO: Make this throw an exception:
         if not self.cap.isOpened():
             print("Could not open: {}".format(video_source))
             exit()
@@ -38,11 +38,11 @@ class Compositor:
         Function reads next image from video capture device/file and returns
         created Frame object using the image previously read.
         """
-        # TODO: Rewrite as a iterator class !!! (???)
-        ret, img = self.cap.read()
+        for x in range(2): # TODO: SETTINGS
+            ret, img = self.cap.read()
 
-        if not ret:
-            return None
+            if not ret:
+                return None
 
         return Frame(img, False)
 
@@ -52,11 +52,12 @@ class Compositor:
         Function takes a frame instance and its movement coords and calls
         the appropriate Model methods in order to add the frame to it.
         """
-        # TODO: implement addToModel()
-        #       detect new KeyPoints + add to the model
         self.frame.detectKeyPoints()
+
         if self.debug:
-            print("Adding the frame to Model with movement: {}".format(movement))
+            print("Adding the frame to Model with movement: {} (not implemented yet)".format(movement))
+
+        Compositor.model.add(self, movement)
 
 
     def run(self):
@@ -66,17 +67,11 @@ class Compositor:
         created and further processed.
         """
         # Process first frame first:
-        #self.frame.detectKeyPoints()
-        #Compositor.model.add(self.frame)
         self.addFrameToModel()
 
         movement_sum = (0.0, 0.0)
 
-        # TODO: fix the loop when grabNextFrame is an iterator
-        #       or
-        #       put condition like while movement_sum < threshold and len(KP) > xx ...
         while True:
-            #self.prev_frame = copy.deepcopy(self.frame)
             self.prev_frame = self.frame
             self.frame = self.grabNextFrame()
 
@@ -88,13 +83,12 @@ class Compositor:
 
             tracked = self.frame.trackKeyPoints(self.prev_frame)
 
-            # TODO: fix this condition!
-            #       use threshold counted from the size of frame
-            #       defined elsewhere (settings class?)
             if tracked == None:
                 continue
 
-            if abs(movement_sum[0]) > 150 or abs(movement_sum[1] > 150) or tracked < 50:
+            # TODO: work on this condition!
+            #       like if the combined size of x and y is > xx ... (a function maybe?)
+            if abs(movement_sum[0]) > 150 or abs(movement_sum[1] > 150) or tracked < 100: # TODO: SETTINGS
                 self.addFrameToModel(movement_sum)
                 movement_sum = (0.0, 0.0)
                 continue
@@ -106,14 +100,3 @@ class Compositor:
                 if cv2.waitKey(30) >= 0:
                     cv2.destroyWindow("DEBUG")
                     break
-
-
-        #if self.debug:
-            #print("Total movement: {}".format(movement_sum))
-
-            # TODO:
-            #    operations on frame (KP tracking)
-            #    movement direction (implemented elsewhere)
-            #    return selected key frames => add into model ...
-
-        # .... (to be finished)
