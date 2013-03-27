@@ -51,7 +51,12 @@ class Compositor:
         """
         Function takes a frame instance and its movement coords and calls
         the appropriate Model methods in order to add the frame to it.
+
+        The movement is a tuple of Point coords: (y, x)
         """
+        # Make movement coords integers:
+        movement = [int(item) for item in movement]
+
         self.frame.detectKeyPoints()
 
         if self.debug:
@@ -72,6 +77,9 @@ class Compositor:
         # Process first frame first:
         self.addFrameToModel()
 
+        # TODO: movement as a numpy array (?) => easier arithmetic operations
+
+        # Movement sum in format (y, x)
         movement_sum = (0.0, 0.0)
 
         while True:
@@ -81,7 +89,6 @@ class Compositor:
             if self.frame == None:
                 # add the last frame to the Model:
                 self.frame = self.prev_frame
-                movement_sum = [int(item) for item in movement_sum]
                 self.addFrameToModel(movement_sum)
                 break
 
@@ -94,8 +101,7 @@ class Compositor:
 
             # TODO: work on this condition!
             #       like if the combined size of x and y is > xx ... (a function maybe?)
-            if abs(movement_sum[0]) > 150 or abs(movement_sum[1] > 150) or tracked < 100: # TODO: SETTINGS
-                movement_sum = [int(item) for item in movement_sum]
+            if abs(movement_sum[0]) > 100 or abs(movement_sum[1] > 100) or tracked < 100: # TODO: SETTINGS
                 self.addFrameToModel(movement_sum)
                 movement_sum = (0.0, 0.0)
                 continue

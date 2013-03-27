@@ -10,6 +10,8 @@ from compositor import Compositor
 def TestImread(img_file="../img/s01.jpg"):
     img = cv2.imread(img_file)
 
+    print("Image shape: {}".format(img.shape))
+
     cv2.imshow("img", img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
@@ -48,7 +50,7 @@ def TestFPTracking():
 
 
 def TestCompositor():
-    compositor = Compositor("../img/video/foglab3.mov", rt_result=True, debug=True)
+    compositor = Compositor("../img/video/paper2.mov", rt_result=True, debug=True)
     compositor.run()
 
 

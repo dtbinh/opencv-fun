@@ -68,6 +68,8 @@ class Frame():
     def _calcAvgDisplacement(self, prev_kp, kp):
         """
         Calculates average displacement of two sets of KeyPoints.
+
+        Returns a tuple representing Point coords: (y, x)
         """
         # TODO: If values differ too much:
         #         * filter out such values
@@ -76,10 +78,10 @@ class Frame():
         ds_x = []
         ds_y = []
         for i in range(len(kp)):
-            ds_x.append(kp[i].pt[0] - prev_kp[i].pt[0])
-            ds_y.append(kp[i].pt[1] - prev_kp[i].pt[1])
+            ds_x.append(prev_kp[i].pt[0] - kp[i].pt[0])
+            ds_y.append(prev_kp[i].pt[1] - kp[i].pt[1])
 
-        return (sum(ds_x)/len(ds_x), sum(ds_y)/len(ds_y))
+        return (sum(ds_y)/len(ds_y), sum(ds_x)/len(ds_x))
 
 
     def trackKeyPoints(self, prev_frame):
