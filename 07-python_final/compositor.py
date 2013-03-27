@@ -57,7 +57,10 @@ class Compositor:
         if self.debug:
             print("Adding the frame to Model with movement: {} (not implemented yet)".format(movement))
 
-        Compositor.model.add(self, movement)
+        Compositor.model.add(self.frame, movement)
+
+        if self.debug:
+            print("Current position in model: {}".format(Compositor.model.act_pos))
 
 
     def run(self):
@@ -78,17 +81,21 @@ class Compositor:
             if self.frame == None:
                 # add the last frame to the Model:
                 self.frame = self.prev_frame
+                movement_sum = [int(item) for item in movement_sum]
                 self.addFrameToModel(movement_sum)
                 break
 
             tracked = self.frame.trackKeyPoints(self.prev_frame)
 
             if tracked == None:
+                # TODO: here we should check for the movement size!
+                # TODO: or rather find out why exactly the tracking went wrong and fix it
                 continue
 
             # TODO: work on this condition!
             #       like if the combined size of x and y is > xx ... (a function maybe?)
             if abs(movement_sum[0]) > 150 or abs(movement_sum[1] > 150) or tracked < 100: # TODO: SETTINGS
+                movement_sum = [int(item) for item in movement_sum]
                 self.addFrameToModel(movement_sum)
                 movement_sum = (0.0, 0.0)
                 continue

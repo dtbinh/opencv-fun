@@ -47,10 +47,22 @@ class Model:
             if self.debug:
                 print("Adding first image to model.")
 
-            self = self.__init__(frame, self.debug)
+            self.__init__(frame, self.debug)
+            # clock-wise direction, beginning in the top-left corner
+            self.act_pos = ((0,0), (0,frame.img.shape[1]), frame.img.shape[:2], (frame.img.shape[0],0))
 
         else:
             if self.debug:
                 print("Adding another image to model.")
+
+            # TODO: theese coordinates will have to be warped and corrected over time
+            self.act_pos = tuple((item[0]+movement[0], item[1]+movement[1]) for item in self.act_pos)
+
+                # TODO: use the current position as a mask for KP detection
+                #       frame comes with detected KP already
+                #       match the keypoints and compute homography out of them
+                #       warp the image onto the model
+                #       warp the coordinates (???)
+                #       save the current position on model
 
             #TODO: implement adding another image to the model
