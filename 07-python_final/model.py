@@ -23,6 +23,7 @@ class Model:
             self.model = None
         else:
             self.model = frame
+            self.mask = self.makeMask()
 
         self.act_pos = ((0,0),(0,0),(0,0),(0,0))
 
@@ -38,7 +39,30 @@ class Model:
             print("Model deleted.")
 
 
-    def expand_model(self, movement):
+    def makeMask(self):
+        """
+        Creates a mask of model image based on thresholding the color value.
+        """
+        grayscale = cv2.cvtColor(self.model.img, cv2.COLOR_BGR2GRAY)
+
+        ret, self.mask = cv2.threshold(grayscale, 0, 1, cv2.THRESH_BINARY)
+
+
+    def numOfPointsInMask(self, points):
+        """
+        Returns the number of points that occur __outside__ of the mask
+        """
+        count = 0
+
+        for point in points:
+            # if the point lies outside of the mask, count++:
+            if not self.mask[point[0]][point[1]]:
+                count += 1
+
+        return count
+
+
+    def expandModel(self, movement):
         """
         Creates a new model image expanded by movement coordinates.
         """
@@ -110,7 +134,17 @@ class Model:
             mask[self.act_pos[0][0]:self.act_pos[2][0]-1, self.act_pos[0][1]:self.act_pos[2][1]-1] = 1
             self.model.detectKeyPoints(mask)
 
-            self.expand_model(movement)
+            # TODO: the expansion will only take place when we know that the
+            # image is to be added
+
+            # TODO: HOW TO DETERMINE WHETHER OR NOT IS THE IMAGE TO BE ADDED
+            # 1) create a mask of current model img
+            # 2) determine if corner points of added image (warped?) are inside the mask or not
+            # 3) if they are -> the image is already in the model
+            #    else -> add the image
+
+            self.expandModel(movement)
+            self.makeMask()
 
             if self.debug:
                 cv2.imshow("x", self.model.img)
