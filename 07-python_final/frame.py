@@ -15,7 +15,7 @@ class Frame():
         Initialises an instance of the Frame class.
         """
         # TODO: experiment with the SURF() value to get better results faster
-        self.detector = cv2.SURF(350) # TODO: SETTINGS
+        self.detector = cv2.SURF(100) # TODO: SETTINGS
         self.extractor = cv2.DescriptorExtractor_create("SURF")
 
         self.debug = debug
