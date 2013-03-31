@@ -254,7 +254,7 @@ class Model:
             # 4) check the points with numOfPointsMask
             #num = self.numOfPointsInMask(int_warped_corners)
 
-            new = cv2.warpPerspective(frame.img, H, self.model.img.shape[:2], flags=cv2.WARP_INVERSE_MAP)
+            new = cv2.warpPerspective(frame.img, H, (self.model.img.shape[1], self.model.img.shape[0]), flags=cv2.WARP_INVERSE_MAP)
             # TODO:
             # now we need to figure out the way of putting the images together ... (alpha channel, ???)
 
