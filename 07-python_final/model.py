@@ -67,7 +67,8 @@ class Model:
         if self.debug:
             print("About to compute homography out of {} and {} points.".format(len(prev_points), len(points)))
 
-        H, status = cv2.findHomography(points, prev_points, cv2.RANSAC, 3.0) # TODO: SETTINGS
+        # Mind the order of points and prev_points
+        H, status = cv2.findHomography(prev_points, points, cv2.RANSAC, 3.0) # TODO: SETTINGS
 
         if self.debug:
             print("After homography: {}/{} inliers/matched".format(np.sum(status), len(status)))
@@ -82,6 +83,10 @@ class Model:
         grayscale = cv2.cvtColor(self.model.img, cv2.COLOR_BGR2GRAY)
 
         ret, self.mask = cv2.threshold(grayscale, 0, 1, cv2.THRESH_BINARY)
+
+        # This is done because of the np.copyto() => mask has to have the same
+        # amount of channels as the image
+        self.mask = cv2.cvtColor(self.mask, cv2.COLOR_GRAY2BGR)
 
 
     def numOfPointsInMask(self, points):
@@ -181,6 +186,8 @@ class Model:
             # clock-wise direction, beginning in the top-left corner
             self.act_pos = ((0,0), (frame.img.shape[0], 0), frame.img.shape[:2], (0, frame.img.shape[1]))
 
+
+            #cv2.imshow("first", self.model.img)
         else:
             if self.debug:
                 print("Adding another image to model.")
@@ -191,14 +198,14 @@ class Model:
             ## THIS DOESN'T WORK! #
             #######################
 
-            mask = np.zeros(self.model.img.shape[:2], np.uint8)
+            #mask = np.zeros(self.model.img.shape[:2], np.uint8)
 
-            if self.debug:
-                print("Mask of size {} created.".format(self.model.img.shape[:2]))
-                print("-> the ones are here: {}:{}, {}:{}".format(self.act_pos[0][0], self.act_pos[2][0]-1, self.act_pos[0][1], self.act_pos[2][1]-1))
+            #if self.debug:
+                #print("Mask of size {} created.".format(self.model.img.shape[:2]))
+                #print("-> the ones are here: {}:{}, {}:{}".format(self.act_pos[0][0], self.act_pos[2][0]-1, self.act_pos[0][1], self.act_pos[2][1]-1))
 
-            # Detect KeyPoints only in current position:
-            mask[self.act_pos[0][0]:self.act_pos[2][0]-1, self.act_pos[0][1]:self.act_pos[2][1]-1] = 1
+            ## Detect KeyPoints only in current position:
+            #mask[self.act_pos[0][0]:self.act_pos[2][0]-1, self.act_pos[0][1]:self.act_pos[2][1]-1] = 1
             #self.model.detectKeyPoints(mask)
 
             # TODO: the expansion will only take place when we know that the
@@ -216,7 +223,7 @@ class Model:
             # TODO: detect KP only on a current area, not the whole model
             self.makeMask()
             #self.model.detectKeyPoints(mask)
-            self.model.detectKeyPoints()
+            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGR2GRAY))
 
             # 2) match points => compute homography matrix
             H = self.computeHomography(frame)
@@ -236,6 +243,9 @@ class Model:
             int_warped_corners = [(int(round(corner[0])), int(round(corner[1]))) for corner in warped_corners[0]]
             print(int_warped_corners)
 
+            # backup a model img before expansion
+            #backup = self.model.img[:]
+
             # 3.5 expand the model by movement
             self.expandModel(movement)
 
@@ -254,13 +264,19 @@ class Model:
             # 4) check the points with numOfPointsMask
             #num = self.numOfPointsInMask(int_warped_corners)
 
-            new = cv2.warpPerspective(frame.img, H, (self.model.img.shape[1], self.model.img.shape[0]), flags=cv2.WARP_INVERSE_MAP)
+            new = np.zeros([self.model.img.shape[0], self.model.img.shape[1], 4], np.uint8)
+
+            new = cv2.warpPerspective(frame.img, H, (self.model.img.shape[1], self.model.img.shape[0]), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_TRANSPARENT)
+            #new = cv2.warpPerspective(frame.img, H, (self.model.img.shape[1], self.model.img.shape[0]), borderMode=cv2.BORDER_TRANSPARENT)
             # TODO:
             # now we need to figure out the way of putting the images together ... (alpha channel, ???)
-
+            #np.copyto(new, self.model.img, where=np.array(self.mask, dtype=np.bool))
+            np.copyto(self.model.img, new)
+            #self.model.img = new
 
             if self.debug:
-                cv2.imshow("x", new)
+                #cv2.imshow("x", new)
+                cv2.imshow("expanded", self.model.img)
                 cv2.waitKey(0)
                 print("New img size = {}".format(self.model.img.shape))
 
