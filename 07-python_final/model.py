@@ -22,9 +22,15 @@ class Model:
         if frame == None:
             self.model = None
         else:
-            self.model = frame
+            #self.model = frame
+            img = np.zeros((720, 1440, 4), dtype=np.uint8) # TODO: settings!
+            self.model = Frame(img)
+            # a bit crazy expression:
+            self.model.img[self.model.img.shape[0]/2-frame.img.shape[0]/2:self.model.img.shape[0]/2+frame.img.shape[0]/2, self.model.img.shape[1]/2-frame.img.shape[1]/2:self.model.img.shape[1]/2+frame.img.shape[1]/2] = frame.img
             self.mask = self.makeMask()
+            self.model.detectKeyPoints(self.mask)
 
+        # TODO: fix this:
         self.act_pos = ((0,0),(0,0),(0,0),(0,0))
 
         if self.debug:
@@ -80,14 +86,38 @@ class Model:
         """
         Creates a mask of model image based on thresholding the color value.
         """
-        grayscale = cv2.cvtColor(self.model.img, cv2.COLOR_BGR2GRAY)
+        mask = np.zeros((self.model.img.shape[0], self.model.img.shape[1], 1), dtype=np.uint8)
 
-        ret, self.mask = cv2.threshold(grayscale, 0, 1, cv2.THRESH_BINARY)
+        # TODO: this is ugly, think of a better solution:
+        #for i in range(self.model.img.shape[0]):
+            #for j in range(self.model.img.shape[1]):
+                #if self.model.img[i][j][3] != 0:
+                    #mask[i][j][0] = 1
 
-        # This is done because of the np.copyto() => mask has to have the same
-        # amount of channels as the image
-        self.mask = cv2.cvtColor(self.mask, cv2.COLOR_GRAY2BGR)
+        #grayscale = cv2.cvtColor(self.model.img, cv2.COLOR_BGR2GRAY)
+        alpha = np.dsplit(self.model.img, 4)[3]
 
+        ret, self.mask = cv2.threshold(alpha, 254, 1, cv2.THRESH_BINARY)
+
+        ## This is done because of the np.copyto() => mask has to have the same
+        ## amount of channels as the image
+        self.mask = cv2.cvtColor(self.mask, cv2.COLOR_GRAY2BGRA)
+
+
+    def mkMask(self, img):
+        """
+        Creates a mask of model image based on thresholding the color value.
+        """
+        mask = np.zeros((img.shape[0], img.shape[1], 1), dtype=np.uint8)
+
+        alpha = np.dsplit(img, 4)[3]
+
+        ret, mask = cv2.threshold(alpha, 254, 1, cv2.THRESH_BINARY)
+
+        ## This is done because of the np.copyto() => mask has to have the same
+        ## amount of channels as the image
+        mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGRA)
+        return mask
 
     def numOfPointsInMask(self, points):
         """
@@ -141,7 +171,7 @@ class Model:
         if movement[0] == 0 and movement[1] == 0:
             return
 
-        new_img = np.zeros((self.model.img.shape[0]+abs(movement[0]), self.model.img.shape[1]+abs(movement[1]), 3), np.uint8)
+        new_img = np.zeros((self.model.img.shape[0]+abs(movement[0]), self.model.img.shape[1]+abs(movement[1]), 4), np.uint8)
 
         x_start = x_end = y_start = y_end = 0
 
@@ -223,7 +253,7 @@ class Model:
             # TODO: detect KP only on a current area, not the whole model
             self.makeMask()
             #self.model.detectKeyPoints(mask)
-            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGR2GRAY))
+            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY))
 
             # 2) match points => compute homography matrix
             H = self.computeHomography(frame)
@@ -247,7 +277,7 @@ class Model:
             #backup = self.model.img[:]
 
             # 3.5 expand the model by movement
-            self.expandModel(movement)
+            #self.expandModel(movement)
 
             #if self.debug:
                 #print("ACT_POS: {}".format(self.act_pos))
@@ -267,11 +297,15 @@ class Model:
             new = np.zeros([self.model.img.shape[0], self.model.img.shape[1], 4], np.uint8)
 
             new = cv2.warpPerspective(frame.img, H, (self.model.img.shape[1], self.model.img.shape[0]), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_TRANSPARENT)
+            cv2.imshow("warped", new)
+            cv2.imwrite("/home/milan/xx.png", new)
+            cv2.waitKey(0)
             #new = cv2.warpPerspective(frame.img, H, (self.model.img.shape[1], self.model.img.shape[0]), borderMode=cv2.BORDER_TRANSPARENT)
             # TODO:
             # now we need to figure out the way of putting the images together ... (alpha channel, ???)
-            np.copyto(new, self.model.img, where=np.array(self.mask, dtype=np.bool))
-            #np.copyto(self.model.img, new)
+            new_mask = self.mkMask(new)
+            np.copyto(new, self.model.img, where=np.array(new_mask, dtype=np.bool))
+            #np.copyto(self.model.img, new, where=np.array(self.mask, dtype=np.bool))
             self.model.img = new
 
             if self.debug:

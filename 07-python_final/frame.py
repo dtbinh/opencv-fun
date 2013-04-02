@@ -19,7 +19,7 @@ class Frame():
         self.extractor = cv2.DescriptorExtractor_create("SURF")
 
         self.debug = debug
-        self.img = image
+        self.img = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
 
         self.kp = None
         self.desc = None
