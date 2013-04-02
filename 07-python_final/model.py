@@ -55,10 +55,10 @@ class Model:
         (prev_gkp, gkp) = common.extractGoodKP(frame, self.model, matches)
 
         # Find good matches only:
-        prev_gkp = []
-        gkp = []
-        good_matches = common.findGoodMatches(frame, self.model)
-        (prev_gkp, gkp) = common.extractGoodKP(frame, self.model, good_matches)
+        #prev_gkp = []
+        #gkp = []
+        #good_matches = common.findGoodMatches(frame, self.model)
+        #(prev_gkp, gkp) = common.extractGoodKP(frame, self.model, good_matches)
 
         # Convert KeyPoints to Points
         prev_points = common.keyPoint2Point(prev_gkp)
@@ -270,9 +270,9 @@ class Model:
             #new = cv2.warpPerspective(frame.img, H, (self.model.img.shape[1], self.model.img.shape[0]), borderMode=cv2.BORDER_TRANSPARENT)
             # TODO:
             # now we need to figure out the way of putting the images together ... (alpha channel, ???)
-            #np.copyto(new, self.model.img, where=np.array(self.mask, dtype=np.bool))
-            np.copyto(self.model.img, new)
-            #self.model.img = new
+            np.copyto(new, self.model.img, where=np.array(self.mask, dtype=np.bool))
+            #np.copyto(self.model.img, new)
+            self.model.img = new
 
             if self.debug:
                 #cv2.imshow("x", new)
