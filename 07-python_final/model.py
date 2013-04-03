@@ -22,7 +22,7 @@ class Model:
         if frame == None:
             self.model = None
         else:
-            img = np.zeros((1024, 2048, 4), dtype=np.uint8) # TODO: settings!
+            img = np.zeros((960, 2048, 4), dtype=np.uint8) # TODO: settings!
             self.model = Frame(img)
             # a bit crazy expression:
             self.model.img[self.model.img.shape[0]/2-frame.img.shape[0]/2:self.model.img.shape[0]/2+frame.img.shape[0]/2, self.model.img.shape[1]/2-frame.img.shape[1]/2:self.model.img.shape[1]/2+frame.img.shape[1]/2] = frame.img
@@ -284,7 +284,7 @@ class Model:
 
             if self.debug:
                 cv2.imshow("expanded", self.model.img)
-                #cv2.waitKey(0)
+                cv2.waitKey(0)
                 print("New img size = {}".format(self.model.img.shape))
 
             if self.debug:

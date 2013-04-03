@@ -50,7 +50,7 @@ def TestFPTracking():
 
 
 def TestCompositor():
-    compositor = Compositor("../img/video/foglab3.mov", rt_result=False, debug=False)
+    compositor = Compositor("../img/video/mess.mp4", rt_result=True, debug=True)
     compositor.run()
 
 
