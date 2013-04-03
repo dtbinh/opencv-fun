@@ -22,12 +22,11 @@ class Model:
         if frame == None:
             self.model = None
         else:
-            #self.model = frame
             img = np.zeros((1024, 2048, 4), dtype=np.uint8) # TODO: settings!
             self.model = Frame(img)
             # a bit crazy expression:
             self.model.img[self.model.img.shape[0]/2-frame.img.shape[0]/2:self.model.img.shape[0]/2+frame.img.shape[0]/2, self.model.img.shape[1]/2-frame.img.shape[1]/2:self.model.img.shape[1]/2+frame.img.shape[1]/2] = frame.img
-            self.mask = self.makeMask()
+            self.mask = self.mkModelMask()
             self.model.detectKeyPoints(self.mask)
 
         # TODO: fix this:
@@ -82,26 +81,18 @@ class Model:
         return H
 
 
-    def makeMask(self):
+    # TODO: merge this function with mkMask()
+    def mkModelMask(self):
         """
         Creates a mask of model image based on thresholding the color value.
         """
         mask = np.zeros((self.model.img.shape[0], self.model.img.shape[1], 1), dtype=np.uint8)
-
-        # TODO: this is ugly, think of a better solution:
-        #for i in range(self.model.img.shape[0]):
-            #for j in range(self.model.img.shape[1]):
-                #if self.model.img[i][j][3] != 0:
-                    #mask[i][j][0] = 1
-
-        #grayscale = cv2.cvtColor(self.model.img, cv2.COLOR_BGR2GRAY)
         alpha = np.dsplit(self.model.img, 4)[3]
 
         ret, self.mask = cv2.threshold(alpha, 254, 1, cv2.THRESH_BINARY)
 
         ## This is done because of the np.copyto() => mask has to have the same
         ## amount of channels as the image
-        #self.mask = cv2.cvtColor(self.mask, cv2.COLOR_GRAY2BGRA)
         self.mask = np.dstack((self.mask, self.mask, self.mask, self.mask))
 
 
@@ -110,23 +101,22 @@ class Model:
         Creates a mask of model image based on thresholding the color value.
         """
         mask = np.zeros((img.shape[0], img.shape[1], 1), dtype=np.uint8)
-
         alpha = np.dsplit(img, 4)[3]
 
         ret, mask = cv2.threshold(alpha, 254, 1, cv2.THRESH_BINARY)
 
         ## This is done because of the np.copyto() => mask has to have the same
         ## amount of channels as the image
-        #mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGRA)
-        mask = np.dstack((mask, mask, mask, mask))
-        print mask
-        return mask
+        return np.dstack((mask, mask, mask, mask))
+
 
     def numOfPointsInMask(self, points):
         """
         Returns the number of points that occur __outside__ of the mask
         """
         count = 0
+
+        # TODO: check if the point is outside of the image
 
         for point in points:
             # if the point lies outside of the mask, count++:
@@ -166,7 +156,7 @@ class Model:
         return int_warped_corners
 
 
-
+    # TODO: remove this when done, this function is no longer used
     def expandModel(self, movement):
         """
         Creates a new model image expanded by movement coordinates.
@@ -219,30 +209,18 @@ class Model:
             # clock-wise direction, beginning in the top-left corner
             self.act_pos = ((0,0), (frame.img.shape[0], 0), frame.img.shape[:2], (0, frame.img.shape[1]))
 
-
-            #cv2.imshow("first", self.model.img)
         else:
             if self.debug:
                 print("Adding another image to model.")
 
+            # TODO for TODO:
+            # check what is needed ...
+
             # TODO: use the current position as a mask for KP detection
-
-            #######################
-            ## THIS DOESN'T WORK! #
-            #######################
-
-            #mask = np.zeros(self.model.img.shape[:2], np.uint8)
-
-            #if self.debug:
-                #print("Mask of size {} created.".format(self.model.img.shape[:2]))
-                #print("-> the ones are here: {}:{}, {}:{}".format(self.act_pos[0][0], self.act_pos[2][0]-1, self.act_pos[0][1], self.act_pos[2][1]-1))
 
             ## Detect KeyPoints only in current position:
             #mask[self.act_pos[0][0]:self.act_pos[2][0]-1, self.act_pos[0][1]:self.act_pos[2][1]-1] = 1
             #self.model.detectKeyPoints(mask)
-
-            # TODO: the expansion will only take place when we know that the
-            # image is to be added
 
             # TODO: HOW TO DETERMINE WHETHER OR NOT IS THE IMAGE TO BE ADDED
             # 1) create a mask of current model img
@@ -254,9 +232,9 @@ class Model:
             # TODO: HOW TO ADD THE IMAGE:
             # 1) detect KP on the whole model img (using mask) => later only using current position
             # TODO: detect KP only on a current area, not the whole model
-            self.makeMask()
+            self.mkModelMask()
             #self.model.detectKeyPoints(mask)
-            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY))
+            self.model.detectKeyPoints(self.mask)
 
             # 2) match points => compute homography matrix
             H = self.computeHomography(frame)
@@ -276,12 +254,6 @@ class Model:
             int_warped_corners = [(int(round(corner[0])), int(round(corner[1]))) for corner in warped_corners[0]]
             print(int_warped_corners)
 
-            # backup a model img before expansion
-            #backup = self.model.img[:]
-
-            # 3.5 expand the model by movement
-            #self.expandModel(movement)
-
             #if self.debug:
                 #print("ACT_POS: {}".format(self.act_pos))
                 #print("CORNERS: {}".format(int_warped_corners))
@@ -292,7 +264,7 @@ class Model:
                 #print("Corrected ACT_POS: {}".format(self.act_pos))
                 #print("Corrected CORNERS: {}".format(int_warped_corners))
 
-            self.makeMask()
+            self.mkModelMask()
             print("Mask size: {}".format(self.mask.shape))
             # 4) check the points with numOfPointsMask
             #num = self.numOfPointsInMask(int_warped_corners)
@@ -300,38 +272,22 @@ class Model:
             new = np.zeros([self.model.img.shape[0], self.model.img.shape[1], 4], np.uint8)
 
             new = cv2.warpPerspective(frame.img, H, (self.model.img.shape[1], self.model.img.shape[0]), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_TRANSPARENT)
-            cv2.imshow("warped", new)
-            cv2.imwrite("/home/milan/xx.png", new)
-            cv2.waitKey(0)
-            #new = cv2.warpPerspective(frame.img, H, (self.model.img.shape[1], self.model.img.shape[0]), borderMode=cv2.BORDER_TRANSPARENT)
-            # TODO:
-            # now we need to figure out the way of putting the images together ... (alpha channel, ???)
+            cv2.imwrite("/home/milan/last_warped.png", new)
+
             new_mask = self.mkMask(new)
+
             # dst first, then src
             np.copyto(self.model.img, new, where=np.array(new_mask, dtype=np.bool))
+            cv2.imwrite("/home/milan/result.png", self.model.img)
             #np.copyto(self.model.img, new, where=np.array(self.mask, dtype=np.bool))
             #self.model.img = new
 
             if self.debug:
-                #cv2.imshow("x", new)
                 cv2.imshow("expanded", self.model.img)
-                cv2.waitKey(0)
+                #cv2.waitKey(0)
                 print("New img size = {}".format(self.model.img.shape))
 
             if self.debug:
                 print("Number of detected KP's: {}".format(len(self.model.kp)))
 
-            ## TODO: theese coordinates will have to be warped and corrected over time
-            ## TODO: don't change the act_pos just yet ...
             #self.act_pos = tuple((item[0]+movement[0], item[1]+movement[1]) for item in self.act_pos)
-
-
-            # TODO: match the keypoints and compute homography out of them
-
-            # TODO: warp the image onto the model
-
-            # TODO: warp the coordinates (???)
-
-            # TODO: save the current position on model
-
-            #TODO: implement adding another image to the model

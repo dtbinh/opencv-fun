@@ -101,12 +101,12 @@ class Compositor:
 
             # TODO: work on this condition!
             #       like if the combined size of x and y is > xx ... (a function maybe?)
-            if abs(movement_sum[0]) > 80 or abs(movement_sum[1]) > 80 or tracked < 80: # TODO: SETTINGS
+            if abs(movement_sum[0]) > 120 or abs(movement_sum[1]) > 120 or tracked < 20: # TODO: SETTINGS
                 self.addFrameToModel(movement_sum)
                 movement_sum = (0.0, 0.0)
                 continue
 
-            movement_sum = tuple(sum(item) for item in zip(movement_sum, self.frame.getDisplacement()))
+            movement_sum = tuple(sum(item) for item in zip(movement_sum, self.frame.displacement))
 
             if self.debug:
                 cv2.imshow("DEBUG", self.frame.img)

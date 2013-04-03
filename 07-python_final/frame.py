@@ -15,7 +15,7 @@ class Frame():
         Initialises an instance of the Frame class.
         """
         # TODO: experiment with the SURF() value to get better results faster
-        self.detector = cv2.SURF(350) # TODO: SETTINGS
+        self.detector = cv2.SURF(400) # TODO: SETTINGS
         self.extractor = cv2.DescriptorExtractor_create("SURF")
 
         self.debug = debug
@@ -100,17 +100,9 @@ class Frame():
         prev_kp = [kp for kp, flag in zip(prev_frame.kp, status) if flag]
         self.kp = [kp for kp, flag in zip(tmp_kp, status) if flag]
 
-        #print("LEN (line 101): {}/{}!".format(len(prev_kp), len(self.kp)))
-
         # filter out descriptors of untracked KP:
         self.kp, self.desc = self.extractor.compute(self.img, self.kp)
         prev_frame.kp, prev_frame.desc = prev_frame.extractor.compute(prev_frame.img, prev_kp)
-
-        #if len(self.desc) != len(prev_frame.desc):
-            #print("LEN DIFFERS (line 109): {}/{}!".format(len(prev_frame.desc), len(self.desc)))
-
-        #if len(self.kp) != len(prev_frame.kp):
-            #print("LEN DIFFERS (line 112): {}/{}!".format(len(prev_frame.kp), len(self.kp)))
 
         # find good matches only:
         #good_matches = common.findGoodMatches(prev_frame, self)
@@ -139,15 +131,6 @@ class Frame():
             print("Keypoints tracked ({}), displacement: {}.".format(len(self.kp), self.displacement))
 
         return len(self.kp)
-
-
-    # TODO: do we need this function at all?
-    def getDisplacement(self):
-        """
-        Returns the calculated displacement after 'trackKeyPoints()' has been
-        successfully called.
-        """
-        return self.displacement
 
 
     def __del__(self):
