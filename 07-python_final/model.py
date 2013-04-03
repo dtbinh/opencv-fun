@@ -234,7 +234,7 @@ class Model:
             # TODO: detect KP only on a current area, not the whole model
             self.mkModelMask()
             #self.model.detectKeyPoints(mask)
-            self.model.detectKeyPoints(self.mask)
+            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY))
 
             # 2) match points => compute homography matrix
             H = self.computeHomography(frame)
