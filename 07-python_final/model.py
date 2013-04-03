@@ -23,7 +23,7 @@ class Model:
             self.model = None
         else:
             #self.model = frame
-            img = np.zeros((720, 1440, 4), dtype=np.uint8) # TODO: settings!
+            img = np.zeros((1024, 2048, 4), dtype=np.uint8) # TODO: settings!
             self.model = Frame(img)
             # a bit crazy expression:
             self.model.img[self.model.img.shape[0]/2-frame.img.shape[0]/2:self.model.img.shape[0]/2+frame.img.shape[0]/2, self.model.img.shape[1]/2-frame.img.shape[1]/2:self.model.img.shape[1]/2+frame.img.shape[1]/2] = frame.img
@@ -101,7 +101,8 @@ class Model:
 
         ## This is done because of the np.copyto() => mask has to have the same
         ## amount of channels as the image
-        self.mask = cv2.cvtColor(self.mask, cv2.COLOR_GRAY2BGRA)
+        #self.mask = cv2.cvtColor(self.mask, cv2.COLOR_GRAY2BGRA)
+        self.mask = np.dstack((self.mask, self.mask, self.mask, self.mask))
 
 
     def mkMask(self, img):
@@ -116,7 +117,9 @@ class Model:
 
         ## This is done because of the np.copyto() => mask has to have the same
         ## amount of channels as the image
-        mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGRA)
+        #mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGRA)
+        mask = np.dstack((mask, mask, mask, mask))
+        print mask
         return mask
 
     def numOfPointsInMask(self, points):
@@ -304,9 +307,10 @@ class Model:
             # TODO:
             # now we need to figure out the way of putting the images together ... (alpha channel, ???)
             new_mask = self.mkMask(new)
-            np.copyto(new, self.model.img, where=np.array(new_mask, dtype=np.bool))
+            # dst first, then src
+            np.copyto(self.model.img, new, where=np.array(new_mask, dtype=np.bool))
             #np.copyto(self.model.img, new, where=np.array(self.mask, dtype=np.bool))
-            self.model.img = new
+            #self.model.img = new
 
             if self.debug:
                 #cv2.imshow("x", new)
