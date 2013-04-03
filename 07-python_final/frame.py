@@ -15,11 +15,15 @@ class Frame():
         Initialises an instance of the Frame class.
         """
         # TODO: experiment with the SURF() value to get better results faster
-        self.detector = cv2.SURF(300) # TODO: SETTINGS
+        self.detector = cv2.SURF(500) # TODO: SETTINGS
         self.extractor = cv2.DescriptorExtractor_create("SURF")
 
         self.debug = debug
-        self.img = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
+
+        # cropping in order to get rid of potentially disrupted borders
+        crop_by = (int(image.shape[0]/20), int(image.shape[1]/20)) # TODO: settings
+        cropped_img = image[crop_by[0]:image.shape[0]-2*crop_by[0], crop_by[1]:image.shape[1]-2*crop_by[1]]
+        self.img = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2BGRA)
 
         self.kp = None
         self.desc = None
@@ -40,7 +44,7 @@ class Frame():
             mask = np.ones(self.img.shape[:2], np.uint8)
 
         # TODO: do we need grayscale?
-        self.grayscale = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
+        self.grayscale = cv2.cvtColor(self.img, cv2.COLOR_BGRA2GRAY)
         (self.kp, self.desc) = self.detector.detectAndCompute(self.grayscale, mask)
 
         if self.debug:
