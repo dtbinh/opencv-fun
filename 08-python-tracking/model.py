@@ -11,3 +11,4 @@ class Model:
     """
     Class representing the model of mapped area.
     """
+

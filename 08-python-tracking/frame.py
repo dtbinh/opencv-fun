@@ -61,7 +61,7 @@ class Frame():
         cv2.waitKey(0)
 
 
-    def _calcAvgDisplacement(self, prev_kp, kp):
+    def calcAvgDisplacement(self, prev_frame):
         """
         Calculates average displacement of two sets of KeyPoints.
 
@@ -73,9 +73,9 @@ class Frame():
 
         ds_x = []
         ds_y = []
-        for i in range(len(kp)):
-            ds_x.append(prev_kp[i].pt[0] - kp[i].pt[0])
-            ds_y.append(prev_kp[i].pt[1] - kp[i].pt[1])
+        for i in range(len(self.kp)):
+            ds_x.append(prev_frame.kp[i].pt[0] - self.kp[i].pt[0])
+            ds_y.append(prev_frame.kp[i].pt[1] - self.kp[i].pt[1])
 
         return (sum(ds_y)/len(ds_y), sum(ds_x)/len(ds_x))
 
@@ -121,7 +121,7 @@ class Frame():
         prev_frame.kp, prev_frame.desc = prev_frame.extractor.compute(prev_frame.img, prev_frame.kp)
 
         # calculate displacement
-        self.displacement = self._calcAvgDisplacement(prev_frame.kp, self.kp)
+        self.displacement = self.calcAvgDisplacement(prev_frame.kp, self.kp)
 
         if settings.debug_frame:
             print("Keypoints tracked ({}), displacement: {}.".format(len(self.kp), self.displacement))
