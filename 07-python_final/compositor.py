@@ -65,7 +65,7 @@ class Compositor:
         Compositor.model.add(self.frame, movement)
 
         if self.debug:
-            print("Current position in model: {}".format(Compositor.model.act_pos))
+            print("Current position in model: {}".format(Compositor.model.current_pos))
 
 
     def run(self):

@@ -24,13 +24,23 @@ class Model:
         else:
             img = np.zeros((960, 2048, 4), dtype=np.uint8) # TODO: settings!
             self.model = Frame(img)
-            # a bit crazy expression:
-            self.model.img[self.model.img.shape[0]/2-frame.img.shape[0]/2:self.model.img.shape[0]/2+frame.img.shape[0]/2, self.model.img.shape[1]/2-frame.img.shape[1]/2:self.model.img.shape[1]/2+frame.img.shape[1]/2] = frame.img
+
+            # Coordinates:
+            y1 = int(self.model.img.shape[0]/2-frame.img.shape[0]/2)
+            x1 = int(self.model.img.shape[1]/2-frame.img.shape[1]/2)
+            y2 = int(self.model.img.shape[0]/2+frame.img.shape[0]/2)
+            x2 = x1
+            y3 = y2
+            x3 = int(self.model.img.shape[1]/2+frame.img.shape[1]/2)
+            y4 = y1
+            x4 = x3
+
+            self.model.img[y1:y2, x1:x3] = frame.img
+
+            self.current_pos = ((y1,x1),(y2,x2),(y3,x3),(y4,x4))
+
             self.mask = self.mkModelMask()
             self.model.detectKeyPoints(self.mask)
-
-        # TODO: fix this:
-        self.act_pos = ((0,0),(0,0),(0,0),(0,0))
 
         if self.debug:
             print("Model initialised (debug={}).".format(self.debug))
@@ -50,30 +60,29 @@ class Model:
         """
         # TODO: this will have to be changed as it counts with the whole model image
 
+        FLANN_INDEX_KDTREE = 1  # bug: flann enums are missing
+        FLANN_INDEX_LSH    = 6
+        flann_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+
         # Compute descriptors:
         self.model.kp, self.model.desc = self.model.extractor.compute(self.model.img, self.model.kp)
         frame.kp, frame.desc = frame.extractor.compute(frame.img, frame.kp)
 
-        matcher = cv2.DescriptorMatcher_create("BruteForce")
-        matches = matcher.match(frame.desc, self.model.desc)
+        self.matcher = cv2.FlannBasedMatcher(flann_params, {})
 
-        (prev_gkp, gkp) = common.extractGoodKP(frame, self.model, matches)
+        matches = self.matcher.knnMatch(frame.desc, self.model.desc, k=2)
+        matches = [m[0] for m in matches if len(m) == 2 and m[0].distance < m[1].distance * 0.75]
 
-        # Find good matches only:
-        #prev_gkp = []
-        #gkp = []
-        #good_matches = common.findGoodMatches(frame, self.model)
-        #(prev_gkp, gkp) = common.extractGoodKP(frame, self.model, good_matches)
+        prev_gkp = [frame.kp[m.queryIdx].pt for m in matches]
+        gkp = [self.model.kp[m.trainIdx].pt for m in matches]
 
-        # Convert KeyPoints to Points
-        prev_points = common.keyPoint2Point(prev_gkp)
-        points = common.keyPoint2Point(gkp)
+        prev_gkp, gkp = np.float32((prev_gkp, gkp))
+        H, status = cv2.findHomography(prev_gkp, gkp, cv2.RANSAC, 3.0)
 
-        if self.debug:
-            print("About to compute homography out of {} and {} points.".format(len(prev_points), len(points)))
+        #if status.sum() < 4:
+            #continue
 
-        # Mind the order of points and prev_points
-        H, status = cv2.findHomography(prev_points, points, cv2.RANSAC, 3.0) # TODO: SETTINGS
+        prev_gkp, gkp = prev_gkp[status], gkp[status]
 
         if self.debug:
             print("After homography: {}/{} inliers/matched".format(np.sum(status), len(status)))
@@ -128,70 +137,70 @@ class Model:
         return count
 
 
-    def correctCoords(self, movement, int_warped_corners):
-        """
-        Corrects coordinates of points after expandModel() has been called.
-        int_warped_corners are a list of rounded integer coords of warped corners
-        of added image
+    #def correctCoords(self, movement, int_warped_corners):
+        #"""
+        #Corrects coordinates of points after expandModel() has been called.
+        #int_warped_corners are a list of rounded integer coords of warped corners
+        #of added image
 
-        Returns corrected warped_corners and assignes self.act_pos
-        """
-        if movement[0] == 0 and movement[1] == 0:
-            return int_warped_corners
+        #Returns corrected warped_corners and assignes self.act_pos
+        #"""
+        #if movement[0] == 0 and movement[1] == 0:
+            #return int_warped_corners
 
-        # if Y < 0 => correct coords:
-        if movement[0] < 0:
-            # fix act_pos:
-            self.act_pos = [(coord[0]+abs(movement[0]), coord[1]) for coord in self.act_pos]
-            # fix int_warped_corners:
-            int_warped_corners = [(corner[0]+abs(movement[0]), corner[1]) for corner in int_warped_corners]
+        ## if Y < 0 => correct coords:
+        #if movement[0] < 0:
+            ## fix act_pos:
+            #self.act_pos = [(coord[0]+abs(movement[0]), coord[1]) for coord in self.act_pos]
+            ## fix int_warped_corners:
+            #int_warped_corners = [(corner[0]+abs(movement[0]), corner[1]) for corner in int_warped_corners]
 
-        # if X < 0 => correct coords:
-        if movement[1] < 0:
-            # fix act_pos:
-            self.act_pos = [(coord[0], coord[1]+abs(movement[1])) for coord in self.act_pos]
-            # fix int_warped_corners:
-            int_warped_corners = [(corner[0], corner[1]+abs(movement[1])) for corner in int_warped_corners]
+        ## if X < 0 => correct coords:
+        #if movement[1] < 0:
+            ## fix act_pos:
+            #self.act_pos = [(coord[0], coord[1]+abs(movement[1])) for coord in self.act_pos]
+            ## fix int_warped_corners:
+            #int_warped_corners = [(corner[0], corner[1]+abs(movement[1])) for corner in int_warped_corners]
 
-        return int_warped_corners
+        #return int_warped_corners
 
 
-    # TODO: remove this when done, this function is no longer used
-    def expandModel(self, movement):
-        """
-        Creates a new model image expanded by movement coordinates.
-        """
-        if movement[0] == 0 and movement[1] == 0:
-            return
+    ## TODO: remove this when done, this function is no longer used
+    #def expandModel(self, movement):
+        #"""
+        #Creates a new model image expanded by movement coordinates.
+        #"""
+        #if movement[0] == 0 and movement[1] == 0:
+            #return
 
-        new_img = np.zeros((self.model.img.shape[0]+abs(movement[0]), self.model.img.shape[1]+abs(movement[1]), 4), np.uint8)
+        #new_img = np.zeros((self.model.img.shape[0]+abs(movement[0]), self.model.img.shape[1]+abs(movement[1]), 4), np.uint8)
 
-        x_start = x_end = y_start = y_end = 0
+        #x_start = x_end = y_start = y_end = 0
 
-        # Find out which directon the image was expanded to:
-        # if Y <= 0 (movement UP) => image extended UP
-        if movement[0] <= 0:
-            y_start = abs(movement[0])
-            y_end = self.model.img.shape[0]+abs(movement[0])
-        # if Y > 0 (movement DOWN) => image extended DOWN
-        else:
-            y_start = 0
-            y_end = self.model.img.shape[0]
+        ## Find out which directon the image was expanded to:
+        ## if Y <= 0 (movement UP) => image extended UP
+        #if movement[0] <= 0:
+            #y_start = abs(movement[0])
+            #y_end = self.model.img.shape[0]+abs(movement[0])
+        ## if Y > 0 (movement DOWN) => image extended DOWN
+        #else:
+            #y_start = 0
+            #y_end = self.model.img.shape[0]
 
-        # if X <= 0 (movement LEFT) => image extended LEFT
-        if movement[1] <= 0:
-            x_start = abs(movement[1])
-            x_end = self.model.img.shape[1]+abs(movement[1])
-        # if X > 0 (movement RIGHT) => image extended RIGHT
-        else:
-            x_start = 0
-            x_end = self.model.img.shape[1]
+        ## if X <= 0 (movement LEFT) => image extended LEFT
+        #if movement[1] <= 0:
+            #x_start = abs(movement[1])
+            #x_end = self.model.img.shape[1]+abs(movement[1])
+        ## if X > 0 (movement RIGHT) => image extended RIGHT
+        #else:
+            #x_start = 0
+            #x_end = self.model.img.shape[1]
 
-        # Copy model image to extended one:
-        new_img[y_start:y_end, x_start:x_end] = self.model.img
+        ## Copy model image to extended one:
+        #new_img[y_start:y_end, x_start:x_end] = self.model.img
 
-        # Assign extended image to image model:
-        self.model.img = new_img
+        ## Assign extended image to image model:
+        #self.model.img = new_img
 
 
 

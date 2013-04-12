@@ -15,7 +15,7 @@ class Frame():
         Initialises an instance of the Frame class.
         """
         # TODO: experiment with the SURF() value to get better results faster
-        self.detector = cv2.SURF(500) # TODO: SETTINGS
+        self.detector = cv2.SURF(350) # TODO: SETTINGS
         self.extractor = cv2.DescriptorExtractor_create("SURF")
 
         self.debug = debug
@@ -43,7 +43,6 @@ class Frame():
         if mask == None:
             mask = np.ones(self.img.shape[:2], np.uint8)
 
-        # TODO: do we need grayscale?
         self.grayscale = cv2.cvtColor(self.img, cv2.COLOR_BGRA2GRAY)
         (self.kp, self.desc) = self.detector.detectAndCompute(self.grayscale, mask)
 
@@ -94,9 +93,12 @@ class Frame():
 
         Returns the number of successfully tracked points.
         """
+        lk_params = dict( winSize  = (19, 19),
+                          maxLevel = 2,
+                          criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
         prev_p = common.keyPoint2Point(prev_frame.kp)
-        (points, status, err) = cv2.calcOpticalFlowPyrLK(prev_frame.img, self.img, prev_p)
+        (points, status, err) = cv2.calcOpticalFlowPyrLK(prev_frame.img, self.img, prev_p, None, **lk_params)
 
         tmp_kp = common.point2Keypoint(points, prev_frame.kp)
 
@@ -107,13 +109,6 @@ class Frame():
         # filter out descriptors of untracked KP:
         self.kp, self.desc = self.extractor.compute(self.img, self.kp)
         prev_frame.kp, prev_frame.desc = prev_frame.extractor.compute(prev_frame.img, prev_kp)
-
-        # find good matches only:
-        #good_matches = common.findGoodMatches(prev_frame, self)
-        #(prev_gkp, gkp) = common.extractGoodKP(prev_frame, self, good_matches)
-
-        #prev_frame.kp = copy.copy(prev_gkp)
-        #self.kp = copy.copy(gkp)
 
         # filter KeyPoints using Homography matrix with RANSAC computation:
         (prev_gkp, gkp) = common.filterKPUsingHomography(prev_frame, self)
