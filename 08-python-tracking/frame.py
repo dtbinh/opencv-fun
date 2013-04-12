@@ -31,20 +31,18 @@ class Frame():
             print("Frame initialised")
 
 
-    def detectKeyPoints(self, mask=None):
+    def detectKeyPoints(self):
         """
         A method used for KeyPoints detection and extraction (using the SURF
         detector/extractor).
 
         Returns the number of KeyPoints detected.
         """
-        if mask == None:
-            mask = np.ones(self.img.shape[:2], np.uint8)
-
         self.grayscale = cv2.cvtColor(self.img, cv2.COLOR_BGRA2GRAY)
-        (self.kp, self.desc) = self.detector.detectAndCompute(self.grayscale, mask)
 
-        if self.debug:
+        (self.kp, self.desc) = self.detector.detectAndCompute(self.grayscale, None)
+
+        if settings.debug_frame:
             print("Keypoints detected ({}) and descriptors extracted.".format(len(self.kp)))
 
 
@@ -125,7 +123,7 @@ class Frame():
         # calculate displacement
         self.displacement = self._calcAvgDisplacement(prev_frame.kp, self.kp)
 
-        if self.debug:
+        if settings.debug_frame:
             print("Keypoints tracked ({}), displacement: {}.".format(len(self.kp), self.displacement))
 
         return len(self.kp)
@@ -135,6 +133,6 @@ class Frame():
         """
         Removes the instance of Frame class.
         """
-        if self.debug:
+        if settings.debug_frame:
             print("Frame deleted.")
 
