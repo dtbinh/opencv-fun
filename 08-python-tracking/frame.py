@@ -25,13 +25,13 @@ class Frame():
         self.kp = None
         self.desc = None
         self.H = None
-        self.displacement = (0.0, 0.0)
+        self.displacement = None
 
         if settings.debug_frame:
             print("Frame initialised")
 
 
-    def detectKeyPoints(self):
+    def detectKeyPoints(self, mask=None):
         """
         A method used for KeyPoints detection and extraction (using the SURF
         detector/extractor).
@@ -40,7 +40,7 @@ class Frame():
         """
         self.grayscale = cv2.cvtColor(self.img, cv2.COLOR_BGRA2GRAY)
 
-        (self.kp, self.desc) = self.detector.detectAndCompute(self.grayscale, None)
+        (self.kp, self.desc) = self.detector.detectAndCompute(self.grayscale, mask)
 
         if settings.debug_frame:
             print("Keypoints detected ({}) and descriptors extracted.".format(len(self.kp)))
@@ -121,7 +121,7 @@ class Frame():
         prev_frame.kp, prev_frame.desc = prev_frame.extractor.compute(prev_frame.img, prev_frame.kp)
 
         # calculate displacement
-        self.displacement = self.calcAvgDisplacement(prev_frame.kp, self.kp)
+        self.displacement = self.calcAvgDisplacement(prev_frame)
 
         if settings.debug_frame:
             print("Keypoints tracked ({}), displacement: {}.".format(len(self.kp), self.displacement))

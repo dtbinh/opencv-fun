@@ -26,16 +26,15 @@ def TestFeatures():
     f.showDetectedKeyPoints()
 
 
-#def TestFeaturesMask():
-    #img = cv2.imread("../img/s01.jpg")
-    #ff = Frame(img)
+def TestFeaturesMask():
+    img = cv2.imread("../img/s01.jpg")
+    ff = Frame(img)
 
-    #mask = np.zeros(img.shape[:2], np.uint8)
-    #mask[200:500, 0:300] = 1
-    #print mask
+    mask = np.zeros((ff.img.shape[:2]), np.uint8)
+    mask[200:500, 0:300] = 1
 
-    #ff.detectKeyPoints(mask=mask)
-    #ff.showDetectedKeyPoints()
+    ff.detectKeyPoints(mask=mask)
+    ff.showDetectedKeyPoints()
 
 
 #def TestFPTracking():
@@ -54,8 +53,8 @@ def TestFeatures():
 
 
 tests_dict = {"TestImread": TestImread,
-              "TestFeatures": TestFeatures}#,
-              #"TestFeaturesMask": TestFeaturesMask},
+              "TestFeatures": TestFeatures,
+              "TestFeaturesMask": TestFeaturesMask}#,
               #"TestFPTracking": TestFPTracking,
               #"TestCompositor": TestCompositor}
 

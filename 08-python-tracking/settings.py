@@ -22,3 +22,10 @@ surf_hessian = 500
 
 # size of cropped area = size/frame_crop_border
 frame_crop_border = 20
+
+
+# Model settings: #
+# --------------- #
+
+# size of model in format: (Y, X, 4)
+model_size = (960, 2048, 4)
