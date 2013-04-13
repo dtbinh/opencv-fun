@@ -61,7 +61,7 @@ class Compositor:
         self.frame.detectKeyPoints()
 
         if self.debug:
-            print("Adding the frame to Model with movement: {} (not implemented yet)".format(movement))
+            print("Adding the frame to Model with movement (Y,X): {}".format(movement))
 
         Compositor.model.add(self.frame, movement)
 

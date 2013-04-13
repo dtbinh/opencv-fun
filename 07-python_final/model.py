@@ -20,7 +20,7 @@ class Model:
         self.debug = debug
 
         if frame != None:
-            img = np.zeros((800, 2048, 4), dtype=np.uint8) # TODO: settings!
+            img = np.zeros((1024, 2048, 4), dtype=np.uint8) # TODO: settings!
             self.model = Frame(img, crop=False)
 
             # Coordinates:
@@ -110,9 +110,6 @@ class Model:
         """
         Returns an image with Rectangle drawn (defined by points).
         """
-        for x in points:
-            print x
-
         cv2.polylines(img, [np.array(points, np.int32)], True, (0, 0, 255, 255), 2)
 
         return img
@@ -138,14 +135,19 @@ class Model:
         """
         count = 0
 
-        # TODO: check if the point is outside of the image
-
         for point in points:
+            if point[0] < 0 or point[0] >= self.model.img.shape[1]:
+                #print("Point coord {} is out of model.".format(point[0]))
+                continue
+            if point[1] < 0 or point[1] >= self.model.img.shape[0]:
+                #print("Point coord {} is out of model.".format(point[1]))
+                continue
             # if the point lies outside of the mask, count++:
-            if not self.mask[point[0]][point[1]]:
+            if not self.mask[point[1]][point[0]][0]:
                 count += 1
-                if self.debug:
-                    print("Point {} is OUTSIDE of the mask".format(point))
+                #print("Point {} is OUTSIDE of the mask".format(point))
+            #else:
+                #print("Point {} is INSIDE of the mask".format(point))
 
         return count
 
@@ -191,10 +193,18 @@ class Model:
             warped_corners = [(int(round(corner[0])), int(round(corner[1]))) for corner in warped_corners[0]]
 
             if self.debug:
-                print("Warped Corners: {}".format(warped_corners))
+                print("Warped Corners (X,Y): {}".format(warped_corners))
 
             # 4) check the points with numOfPointsMask
-            #num = self.numOfPointsInMask(int_warped_corners)
+            num = self.numOfPointsInMask(warped_corners)
+            if self.debug:
+                print("$$$$ Number of points outside of mask: {} $$$$".format(num))
+
+            if num <= 1:
+                return
+
+            # update current position:
+            self.current_pos = warped_corners
 
             new = np.zeros([self.model.img.shape[0], self.model.img.shape[1], 4], np.uint8)
             warped = cv2.warpPerspective(frame.img, H, (self.model.img.shape[1], self.model.img.shape[0]), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_TRANSPARENT)
