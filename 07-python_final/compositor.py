@@ -78,8 +78,6 @@ class Compositor:
         # Process first frame first:
         self.addFrameToModel()
 
-        # TODO: movement as a numpy array (?) => easier arithmetic operations
-
         # Movement sum in format (y, x)
         movement_sum = (0.0, 0.0)
 

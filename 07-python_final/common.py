@@ -32,44 +32,6 @@ def point2Keypoint(points, prev_kp=None, kp_size=1):
     return kp
 
 
-#def extractGoodKP(prev_frame, frame, good_matches):
-    #"""
-    #Extracts Good KeyPoints from previously found Good Matches.
-
-    #Returns tuple (previous_good_KP, good_KP).
-    #"""
-    #prev_gkp = []
-    #gkp = []
-    #for i in range(len(good_matches)):
-        #prev_gkp.append(prev_frame.kp[good_matches[i].queryIdx])
-        #gkp.append(frame.kp[good_matches[i].trainIdx])
-
-    #if frame.debug:
-        #print("Good keypoints found: {}".format(len(gkp)))
-
-    #return (prev_gkp, gkp)
-
-
-#def findGoodMatches(prev_frame, frame):
-    #"""
-    #Finds good matches of previously detected KeyPoints.
-
-    #Returns 'good_matches'.
-    #"""
-    #matcher = cv2.DescriptorMatcher_create("BruteForce")
-    #matches = matcher.match(prev_frame.desc, frame.desc)
-
-    #dist = [m.distance for m in matches]
-
-    ## threshold: half the mean
-    #thres_dist = (sum(dist) / len(dist)) * 0.5 # TODO: SETTINGS
-
-    ## keep only the reasonable matches
-    #good_matches = [m for m in matches if m.distance < thres_dist]
-
-    #return good_matches
-
-
 def filterKPUsingHomography(prev_frame, frame):
     """
     Returns a homography matrix. 'good_matches' are to be obtained by running
