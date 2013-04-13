@@ -10,7 +10,7 @@ class Frame():
     """
     Class representing the Frame class.
     """
-    def __init__(self, image, debug=False):
+    def __init__(self, image, crop=True, debug=False):
         """
         Initialises an instance of the Frame class.
         """
@@ -21,9 +21,12 @@ class Frame():
         self.debug = debug
 
         # cropping in order to get rid of potentially disrupted borders
-        crop_by = (int(image.shape[0]/20), int(image.shape[1]/20)) # TODO: settings
-        cropped_img = image[crop_by[0]:image.shape[0]-2*crop_by[0], crop_by[1]:image.shape[1]-2*crop_by[1]]
-        self.img = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2BGRA)
+        if crop:
+            crop_by = (int(image.shape[0]/20), int(image.shape[1]/20)) # TODO: settings
+            cropped_img = image[crop_by[0]:image.shape[0]-2*crop_by[0], crop_by[1]:image.shape[1]-2*crop_by[1]]
+            self.img = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2BGRA)
+        else:
+            self.img = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
 
         self.kp = None
         self.desc = None
@@ -40,8 +43,6 @@ class Frame():
 
         Returns the number of KeyPoints detected.
         """
-        if mask == None:
-            mask = np.ones(self.img.shape[:2], np.uint8)
 
         self.grayscale = cv2.cvtColor(self.img, cv2.COLOR_BGRA2GRAY)
         (self.kp, self.desc) = self.detector.detectAndCompute(self.grayscale, mask)

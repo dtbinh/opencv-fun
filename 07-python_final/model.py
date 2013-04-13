@@ -19,11 +19,9 @@ class Model:
         """
         self.debug = debug
 
-        if frame == None:
-            self.model = None
-        else:
+        if frame != None:
             img = np.zeros((960, 2048, 4), dtype=np.uint8) # TODO: settings!
-            self.model = Frame(img)
+            self.model = Frame(img, crop=False)
 
             # Coordinates:
             y1 = int(self.model.img.shape[0]/2-frame.img.shape[0]/2)
@@ -39,8 +37,12 @@ class Model:
 
             self.current_pos = ((y1,x1),(y2,x2),(y3,x3),(y4,x4))
 
-            self.mask = self.mkModelMask()
-            self.model.detectKeyPoints(self.mask)
+            self.mask = self.mkMask(self.model.img)
+            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY))
+
+        else:
+            print("No frame supplied. Exiting.")
+            exit(1)
 
         if self.debug:
             print("Model initialised (debug={}).".format(self.debug))
@@ -88,21 +90,6 @@ class Model:
             print("After homography: {}/{} inliers/matched".format(np.sum(status), len(status)))
 
         return H
-
-
-    # TODO: merge this function with mkMask()
-    def mkModelMask(self):
-        """
-        Creates a mask of model image based on thresholding the color value.
-        """
-        mask = np.zeros((self.model.img.shape[0], self.model.img.shape[1], 1), dtype=np.uint8)
-        alpha = np.dsplit(self.model.img, 4)[3]
-
-        ret, self.mask = cv2.threshold(alpha, 254, 1, cv2.THRESH_BINARY)
-
-        ## This is done because of the np.copyto() => mask has to have the same
-        ## amount of channels as the image
-        self.mask = np.dstack((self.mask, self.mask, self.mask, self.mask))
 
 
     def mkMask(self, img):
@@ -241,15 +228,15 @@ class Model:
             # TODO: HOW TO ADD THE IMAGE:
             # 1) detect KP on the whole model img (using mask) => later only using current position
             # TODO: detect KP only on a current area, not the whole model
-            self.mkModelMask()
+            self.mask = self.mkMask(self.model.img)
             #self.model.detectKeyPoints(mask)
             self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY))
 
             # 2) match points => compute homography matrix
             H = self.computeHomography(frame)
 
-            if self.debug:
-                print("Homography matrix: {}".format(H))
+            #if self.debug:
+                #print("Homography matrix: {}".format(H))
 
             # 3) warp corner points
             corners = np.array([[[0,0], [frame.img.shape[0], 0], [frame.img.shape[0], frame.img.shape[1]], [0, frame.img.shape[1]]]], dtype=np.float32)
@@ -273,8 +260,8 @@ class Model:
                 #print("Corrected ACT_POS: {}".format(self.act_pos))
                 #print("Corrected CORNERS: {}".format(int_warped_corners))
 
-            self.mkModelMask()
-            print("Mask size: {}".format(self.mask.shape))
+            self.mask = self.mkMask(self.model.img)
+            #print("Mask size: {}".format(self.mask.shape))
             # 4) check the points with numOfPointsMask
             #num = self.numOfPointsInMask(int_warped_corners)
 
@@ -294,7 +281,7 @@ class Model:
             if self.debug:
                 cv2.imshow("expanded", self.model.img)
                 cv2.waitKey(0)
-                print("New img size = {}".format(self.model.img.shape))
+                #print("New img size = {}".format(self.model.img.shape))
 
             if self.debug:
                 print("Number of detected KP's: {}".format(len(self.model.kp)))

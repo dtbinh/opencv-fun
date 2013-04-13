@@ -12,7 +12,7 @@ class Compositor:
     Class representing the Compositor object that takes care of taking frames,
     processing them and putting them together in the Model instance.
     """
-    model = Model(None, debug=True)
+    model = None
 
     def __init__(self, video_source=0, rt_result=True, debug=False):
         """
@@ -30,6 +30,7 @@ class Compositor:
             exit()
 
         self.frame = self.grabNextFrame()
+        Compositor.model = Model(self.frame, debug=True)
         self.prev_frame = None
 
 
@@ -44,7 +45,7 @@ class Compositor:
             if not ret:
                 return None
 
-        return Frame(img, False)
+        return Frame(img, crop=True, debug=False)
 
 
     def addFrameToModel(self, movement=(0.0, 0.0)):
@@ -101,7 +102,7 @@ class Compositor:
 
             # TODO: work on this condition!
             #       like if the combined size of x and y is > xx ... (a function maybe?)
-            if abs(movement_sum[0]) > 120 or abs(movement_sum[1]) > 120 or tracked < 20: # TODO: SETTINGS
+            if abs(movement_sum[0]) > 80 or abs(movement_sum[1]) > 80 or tracked < 20: # TODO: SETTINGS
                 self.addFrameToModel(movement_sum)
                 movement_sum = (0.0, 0.0)
                 continue
