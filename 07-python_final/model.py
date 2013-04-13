@@ -106,6 +106,18 @@ class Model:
         return H
 
 
+    def drawRect(self, img, points):
+        """
+        Returns an image with Rectangle drawn (defined by points).
+        """
+        for x in points:
+            print x
+
+        cv2.polylines(img, [np.array(points, np.int32)], True, (0, 0, 255, 255), 2)
+
+        return img
+
+
     def mkMask(self, img):
         """
         Creates a mask of model image based on thresholding the color value.
@@ -169,9 +181,9 @@ class Model:
 
             # 3) warp corner points
             cor1 = (0,0)
-            cor2 = (frame.img.shape[0],0)
-            cor3 = (frame.img.shape[0],frame.img.shape[1])
-            cor4 = (0,frame.img.shape[1])
+            cor2 = (frame.img.shape[1],0)
+            cor3 = (frame.img.shape[1],frame.img.shape[0])
+            cor4 = (0,frame.img.shape[0])
             corners = np.array([[cor1, cor2, cor3, cor4]], dtype=np.float32)
             warped_corners = cv2.perspectiveTransform(corners, H)
 
@@ -195,8 +207,11 @@ class Model:
             #np.copyto(self.model.img, warped, where=np.array(self.mask, dtype=np.bool))
             #self.model.img = warped
 
+            drawed = np.copy(self.model.img)
+
             if self.debug:
-                cv2.imshow("expanded", self.model.img)
+                #cv2.imshow("expanded", self.model.img)
+                cv2.imshow("model", self.drawRect(drawed, warped_corners))
                 cv2.waitKey(0)
 
             if self.debug:
