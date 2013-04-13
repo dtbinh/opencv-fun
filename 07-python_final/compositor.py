@@ -102,7 +102,7 @@ class Compositor:
 
             # TODO: work on this condition!
             #       like if the combined size of x and y is > xx ... (a function maybe?)
-            if abs(movement_sum[0]) > 80 or abs(movement_sum[1]) > 80 or tracked < 20: # TODO: SETTINGS
+            if abs(movement_sum[0]) > 100 or abs(movement_sum[1]) > 100 or tracked < 20: # TODO: SETTINGS
                 self.addFrameToModel(movement_sum)
                 movement_sum = (0.0, 0.0)
                 continue

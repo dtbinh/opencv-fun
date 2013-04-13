@@ -20,7 +20,7 @@ class Model:
         self.debug = debug
 
         if frame != None:
-            img = np.zeros((960, 2048, 4), dtype=np.uint8) # TODO: settings!
+            img = np.zeros((800, 2048, 4), dtype=np.uint8) # TODO: settings!
             self.model = Frame(img, crop=False)
 
             # Coordinates:
@@ -54,6 +54,22 @@ class Model:
         """
         if self.debug:
             print("Model deleted.")
+
+
+    def warpKeyPoints(self, frame, H):
+        """
+        Transforms KeyPoints coordinates according to given homography matrix.
+
+        Returns list of warped KeyPoints.
+        """
+        points = common.keyPoint2Point(frame.kp)
+        points = np.array([points], np.float32)
+
+        warped_points = cv2.perspectiveTransform(points, H)
+
+        #for i in range(len(points[0])):
+        for i in range(50):
+            frame.kp[i].pt = tuple(np.array(warped_points[0][i], np.uint8))
 
 
     def computeHomography(self, frame):
@@ -202,8 +218,6 @@ class Model:
                 print("Adding first image to model.")
 
             self.__init__(frame, self.debug)
-            # clock-wise direction, beginning in the top-left corner
-            self.act_pos = ((0,0), (frame.img.shape[0], 0), frame.img.shape[:2], (0, frame.img.shape[1]))
 
         else:
             if self.debug:
@@ -230,6 +244,7 @@ class Model:
             # TODO: detect KP only on a current area, not the whole model
             self.mask = self.mkMask(self.model.img)
             #self.model.detectKeyPoints(mask)
+
             self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY))
 
             # 2) match points => compute homography matrix
@@ -238,17 +253,25 @@ class Model:
             #if self.debug:
                 #print("Homography matrix: {}".format(H))
 
+            # warp KeyPoints and add them to model KeyPoints
+            #print("Model keypoints before: {} + {}".format(len(self.model.kp), len(frame.kp)))
+            #self.warpKeyPoints(frame, H)
+            #for i in range(len(frame.kp)):
+                #self.model.kp.append(frame.kp[i])
+            #print("Model keypoints after: {}".format(len(self.model.kp)))
+
             # 3) warp corner points
+            #corners
             corners = np.array([[[0,0], [frame.img.shape[0], 0], [frame.img.shape[0], frame.img.shape[1]], [0, frame.img.shape[1]]]], dtype=np.float32)
             warped_corners = cv2.perspectiveTransform(corners, H)
 
             if self.debug:
-                print("Corners before: {}".format(corners))
-                print("Corners after: {}".format(warped_corners))
+                #print("Corners before: {}".format(corners))
+                print("Warped Corners: {}".format(warped_corners))
 
-            # Transform points to int and round them
-            int_warped_corners = [(int(round(corner[0])), int(round(corner[1]))) for corner in warped_corners[0]]
-            print(int_warped_corners)
+            ## Transform points to int and round them
+            #int_warped_corners = [(int(round(corner[0])), int(round(corner[1]))) for corner in warped_corners[0]]
+            #print(int_warped_corners)
 
             #if self.debug:
                 #print("ACT_POS: {}".format(self.act_pos))
