@@ -95,8 +95,9 @@ class Model:
         prev_gkp, gkp = np.float32((prev_gkp, gkp))
         H, status = cv2.findHomography(prev_gkp, gkp, cv2.RANSAC, 3.0)
 
-        #if status.sum() < 4:
-            #continue
+        # In case the number of matched points is less than four:
+        if status.sum() < 4:
+            return None
 
         prev_gkp, gkp = prev_gkp[status], gkp[status]
 
@@ -136,6 +137,7 @@ class Model:
         count = 0
 
         for point in points:
+            # Here, the X, Y coordinates position is out of sync ...
             if point[0] < 0 or point[0] >= self.model.img.shape[1]:
                 #print("Point coord {} is out of model.".format(point[0]))
                 continue
@@ -171,8 +173,12 @@ class Model:
             self.mask = self.mkMask(self.model.img)
             self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY))
 
-            # 2) match points => compute homography matrix
+            # match points => compute homography matrix
             H = self.computeHomography(frame)
+
+            if H == None:
+                print("Not enough points matched.")
+                return
 
             # warp KeyPoints and add them to model KeyPoints
             #print("Model keypoints before: {} + {}".format(len(self.model.kp), len(frame.kp)))
@@ -181,7 +187,7 @@ class Model:
                 #self.model.kp.append(frame.kp[i])
             #print("Model keypoints after: {}".format(len(self.model.kp)))
 
-            # 3) warp corner points
+            # warp corner points
             cor1 = (0,0)
             cor2 = (frame.img.shape[1],0)
             cor3 = (frame.img.shape[1],frame.img.shape[0])
@@ -200,7 +206,9 @@ class Model:
             if self.debug:
                 print("$$$$ Number of points outside of mask: {} $$$$".format(num))
 
-            if num <= 1:
+            # if outside of mask is less than two points:
+            # (zero means all are inside or all are outside of the bounds of model)
+            if num < 2:
                 return
 
             # update current position:
@@ -214,8 +222,6 @@ class Model:
             # dst first, then src
             np.copyto(self.model.img, warped, where=np.array(new_mask, dtype=np.bool))
             cv2.imwrite("/home/milan/result.png", self.model.img)
-            #np.copyto(self.model.img, warped, where=np.array(self.mask, dtype=np.bool))
-            #self.model.img = warped
 
             drawed = np.copy(self.model.img)
 
