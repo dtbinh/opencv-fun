@@ -93,6 +93,15 @@ class Compositor:
 
             tracked = self.frame.trackKeyPoints(self.prev_frame)
 
+            # TODO:
+            # tracked vraci trackovane KP -> matchovat s body v Compositor.model
+            # vypocet homografie
+            # transformace rohu framu podle vypoctene homografie
+            # vykresleni bodu v modelu
+
+            # TODO todo:
+            # warpovat nejdrive vsechny body i pred vypoctem movementu (??)
+
             if tracked == None:
                 # TODO: here we should check for the movement size!
                 # TODO: or rather find out why exactly the tracking went wrong and fix it
