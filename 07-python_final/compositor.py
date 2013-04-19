@@ -93,12 +93,6 @@ class Compositor:
 
             tracked = self.frame.trackKeyPoints(self.prev_frame)
 
-            # TODO:
-            # tracked vraci trackovane KP -> matchovat s body v Compositor.model
-            # vypocet homografie
-            # transformace rohu framu podle vypoctene homografie
-            # vykresleni bodu v modelu
-
             # TODO todo:
             # warpovat nejdrive vsechny body i pred vypoctem movementu (??)
 
@@ -106,6 +100,19 @@ class Compositor:
                 # TODO: here we should check for the movement size!
                 # TODO: or rather find out why exactly the tracking went wrong and fix it
                 continue
+
+            # TODO:
+            # tracked vraci pocet trackovanych KP -> matchovat s body v Compositor.model
+            # vypocet homografie
+            H = Compositor.model.computeHomography(self.frame)
+            #print("Homography matrix: {}".format(H))
+            # transformace rohu framu podle vypoctene homografie
+            warped_corners = Compositor.model.warpCorners(self.frame, H)
+            #print("Warped corners: {}".format(warped_corners))
+            # vykresleni bodu v modelu
+            drawed = np.copy(Compositor.model.model.img)
+            Compositor.model.drawRect(drawed, warped_corners)
+
 
             # TODO: work on this condition!
             #       like if the combined size of x and y is > xx ... (a function maybe?)
@@ -118,6 +125,7 @@ class Compositor:
 
             if self.debug:
                 cv2.imshow("DEBUG", self.frame.img)
+                cv2.imshow("model", drawed)
                 if cv2.waitKey(30) >= 0:
                     cv2.destroyWindow("DEBUG")
                     break

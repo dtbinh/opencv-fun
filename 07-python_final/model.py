@@ -154,6 +154,25 @@ class Model:
         return count
 
 
+    def warpCorners(self, frame, H):
+        """
+        Warps corners of given image according to given homography matrix.
+
+        Returns transformed corners.
+        """
+        cor1 = (0,0)
+        cor2 = (frame.img.shape[1],0)
+        cor3 = (frame.img.shape[1],frame.img.shape[0])
+        cor4 = (0,frame.img.shape[0])
+        corners = np.array([[cor1, cor2, cor3, cor4]], dtype=np.float32)
+        warped_corners = cv2.perspectiveTransform(corners, H)
+
+        # Transform points to int and round them
+        warped_corners = [(int(round(corner[0])), int(round(corner[1]))) for corner in warped_corners[0]]
+
+        return warped_corners
+
+
     def add(self, frame, movement):
         """
         A method for adding a new frame to the model.
@@ -188,15 +207,7 @@ class Model:
             #print("Model keypoints after: {}".format(len(self.model.kp)))
 
             # warp corner points
-            cor1 = (0,0)
-            cor2 = (frame.img.shape[1],0)
-            cor3 = (frame.img.shape[1],frame.img.shape[0])
-            cor4 = (0,frame.img.shape[0])
-            corners = np.array([[cor1, cor2, cor3, cor4]], dtype=np.float32)
-            warped_corners = cv2.perspectiveTransform(corners, H)
-
-            # Transform points to int and round them
-            warped_corners = [(int(round(corner[0])), int(round(corner[1]))) for corner in warped_corners[0]]
+            warped_corners = self.warpCorners(frame, H)
 
             if self.debug:
                 print("Warped Corners (X,Y): {}".format(warped_corners))
@@ -228,7 +239,7 @@ class Model:
             if self.debug:
                 #cv2.imshow("expanded", self.model.img)
                 cv2.imshow("model", self.drawRect(drawed, warped_corners))
-                cv2.waitKey(0)
+                #cv2.waitKey(0)
 
             if self.debug:
                 print("Number of detected KP's: {}".format(len(self.model.kp)))
