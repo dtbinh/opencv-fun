@@ -15,7 +15,7 @@ class Frame():
         Initialises an instance of the Frame class.
         """
         # TODO: experiment with the SURF() value to get better results faster
-        self.detector = cv2.SURF(800) # TODO: SETTINGS
+        self.detector = cv2.SURF(600) # TODO: SETTINGS
         self.extractor = cv2.DescriptorExtractor_create("SURF")
 
         self.debug = debug
@@ -36,19 +36,25 @@ class Frame():
             print("Frame initialised (debug={}).".format(self.debug))
 
 
-    def detectKeyPoints(self, mask=None):
+    def detectKeyPoints(self, mask=None, hessian=None):
         """
         A method used for KeyPoints detection and extraction (using the SURF
         detector/extractor).
 
         Returns the number of KeyPoints detected.
         """
+        if hessian != None:
+            old_detector = self.detector
+            self.detector = cv2.SURF(hessian)
 
         self.grayscale = cv2.cvtColor(self.img, cv2.COLOR_BGRA2GRAY)
         (self.kp, self.desc) = self.detector.detectAndCompute(self.grayscale, mask)
 
         if self.debug:
             print("Keypoints detected ({}) and descriptors extracted.".format(len(self.kp)))
+
+        if hessian != None:
+            self.detector = old_detector
 
         return len(self.kp)
 

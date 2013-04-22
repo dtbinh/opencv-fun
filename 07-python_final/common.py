@@ -48,7 +48,10 @@ def filterKPUsingHomography(prev_frame, frame):
     # TODO: sort this out later ...
     #       why does the length sometimes differ?
     if len(prev_points) != len(points):
-        print("LEN DIFFERS (line 92): {}/{}!".format(len(prev_points), len(points)))
+        #print("LEN DIFFERS (line 92): {}/{}!".format(len(prev_points), len(points)))
+        return (None, None)
+
+    if len(points) < 50: # TODO: SETTINGS!
         return (None, None)
 
     H, status = cv2.findHomography(prev_points, points, cv2.RANSAC, 3.0) # TODO: SETTINGS

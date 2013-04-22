@@ -6,7 +6,6 @@ from model import Model
 import cv2
 import copy
 
-
 class Compositor:
     """
     Class representing the Compositor object that takes care of taking frames,
@@ -93,30 +92,34 @@ class Compositor:
 
             tracked = self.frame.trackKeyPoints(self.prev_frame)
 
-            # TODO todo:
-            # warpovat nejdrive vsechny body i pred vypoctem movementu (??)
-
-            if tracked == None:
+            if tracked == None or tracked < 50: # TODO: SETTINGS
                 # TODO: here we should check for the movement size!
                 # TODO: or rather find out why exactly the tracking went wrong and fix it
+                self.frame.detectKeyPoints()
                 continue
 
-            # TODO:
-            # tracked vraci pocet trackovanych KP -> matchovat s body v Compositor.model
-            # vypocet homografie
+            # tracking:
             H = Compositor.model.computeHomography(self.frame)
-            #print("Homography matrix: {}".format(H))
-            # transformace rohu framu podle vypoctene homografie
+
+            if H == None:
+                self.frame.detectKeyPoints()
+                continue
+
+            # transformation of corners according to the homography matrix:
             warped_corners = Compositor.model.warpCorners(self.frame, H)
-            #print("Warped corners: {}".format(warped_corners))
-            # vykresleni bodu v modelu
+            # copy the model img for drawing:
             drawed = np.copy(Compositor.model.model.img)
-            Compositor.model.drawRect(drawed, warped_corners)
+
+            #if Compositor.model.numOfPointsOutOfModel(warped_corners, 200) < 2:
+            if Compositor.model.cornerTooFarOut(warped_corners, 100): # SETTINGS
+                Compositor.model.drawStr(drawed, (40,120), "OUT OF MODEL!")
+            else:
+                Compositor.model.drawRect(drawed, warped_corners)
 
 
             # TODO: work on this condition!
             #       like if the combined size of x and y is > xx ... (a function maybe?)
-            if abs(movement_sum[0]) > 100 or abs(movement_sum[1]) > 100 or tracked < 20: # TODO: SETTINGS
+            if abs(movement_sum[0]) > 100 or abs(movement_sum[1]) > 100: # TODO: SETTINGS
                 self.addFrameToModel(movement_sum)
                 movement_sum = (0.0, 0.0)
                 continue
@@ -125,7 +128,8 @@ class Compositor:
 
             if self.debug:
                 cv2.imshow("DEBUG", self.frame.img)
-                cv2.imshow("model", drawed)
+                # TODO: implement text on image when camera out of model
+                cv2.imshow("model", cv2.resize(drawed, dsize=(0,0), fx=0.5, fy=0.5))
                 if cv2.waitKey(30) >= 0:
                     cv2.destroyWindow("DEBUG")
                     break

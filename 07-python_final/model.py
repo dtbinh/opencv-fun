@@ -93,6 +93,10 @@ class Model:
         gkp = [self.model.kp[m.trainIdx].pt for m in matches]
 
         prev_gkp, gkp = np.float32((prev_gkp, gkp))
+
+        if len(gkp) < 50: # TODO: SETTINGS!
+            return None
+
         H, status = cv2.findHomography(prev_gkp, gkp, cv2.RANSAC, 3.0)
 
         # In case the number of matched points is less than four:
@@ -101,8 +105,8 @@ class Model:
 
         prev_gkp, gkp = prev_gkp[status], gkp[status]
 
-        if self.debug:
-            print("After homography: {}/{} inliers/matched".format(np.sum(status), len(status)))
+        #if self.debug:
+            #print("After homography: {}/{} inliers/matched".format(np.sum(status), len(status)))
 
         return H
 
@@ -111,7 +115,16 @@ class Model:
         """
         Returns an image with Rectangle drawn (defined by points).
         """
-        cv2.polylines(img, [np.array(points, np.int32)], True, (0, 0, 255, 255), 2)
+        cv2.polylines(img, [np.array(points, np.int32)], True, (0, 128, 255, 255), 3)
+
+        return img
+
+
+    def drawStr(self, img, (x, y), s):
+        """
+        Returns an image with given text (s) on given coords drawn.
+        """
+        cv2.putText(img, s, (x, y), cv2.FONT_HERSHEY_PLAIN, 6.0, (0, 128, 255, 255), thickness = 10, lineType=cv2.CV_AA)
 
         return img
 
@@ -139,19 +152,67 @@ class Model:
         for point in points:
             # Here, the X, Y coordinates position is out of sync ...
             if point[0] < 0 or point[0] >= self.model.img.shape[1]:
-                #print("Point coord {} is out of model.".format(point[0]))
                 continue
             if point[1] < 0 or point[1] >= self.model.img.shape[0]:
-                #print("Point coord {} is out of model.".format(point[1]))
                 continue
             # if the point lies outside of the mask, count++:
             if not self.mask[point[1]][point[0]][0]:
                 count += 1
-                #print("Point {} is OUTSIDE of the mask".format(point))
-            #else:
-                #print("Point {} is INSIDE of the mask".format(point))
 
         return count
+
+
+    def numOfPointsOutOfModel(self, points, max_offset):
+        """
+        Returns the number of points that occur __out__ of model coordinates
+        by more than given max_offset.
+        """
+        count = 0
+
+        for point in points:
+            if point[0] < -max_offset or point[0] > self.model.img.shape[1] + max_offset:
+                count += 1
+            if point[1] < -max_offset or point[1] > self.model.img.shape[0] + max_offset:
+                count += 1
+
+        return count
+
+
+    def placeNotMapped(self, frame, warped_corners):
+        """
+        Returns sum of points in mask that are not mapped yet and number of pixels
+        in the mask.
+        """
+        count = 0
+
+        y = (warped_corners[0][0], warped_corners[1][0])
+        x = (warped_corners[0][1], warped_corners[2][1])
+
+        print("Checking place: Y: {}, X: {}".format(y, x))
+
+        count = np.sum(np.dsplit(self.mask, 4)[3][x[0]:x[1], y[0]:y[1]])
+        print("Sum MAPPED: {}".format(count))
+
+        pixels = (y[1]-y[0])*(x[1]-x[0])
+
+        print("Sum NOT MAPPED: {}".format(pixels-count))
+
+        return (pixels - count, pixels)
+
+
+    def cornerTooFarOut(self, warped_corners, max_offset):
+        """
+        Returns True if one of points coords is too far outside of map (distance
+        is given by max_offset in pixels.
+        Otherwise returns False.
+        """
+        for point in warped_corners:
+            if point[0] < -max_offset or point[0] > self.model.img.shape[1] + max_offset:
+                return True
+            if point[1] < -max_offset or point[1] > self.model.img.shape[0] + max_offset:
+                return True
+
+        return False
 
 
     def warpCorners(self, frame, H):
@@ -185,12 +246,12 @@ class Model:
 
             self.__init__(frame, self.debug)
 
+            self.mask = self.mkMask(self.model.img)
+            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY), 1200) # SETTINGS
+
         else:
             if self.debug:
                 print("Adding another image to model.")
-
-            self.mask = self.mkMask(self.model.img)
-            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY))
 
             # match points => compute homography matrix
             H = self.computeHomography(frame)
@@ -209,21 +270,22 @@ class Model:
             # warp corner points
             warped_corners = self.warpCorners(frame, H)
 
-            if self.debug:
-                print("Warped Corners (X,Y): {}".format(warped_corners))
-
-            # 4) check the points with numOfPointsMask
-            num = self.numOfPointsInMask(warped_corners)
-            if self.debug:
-                print("$$$$ Number of points outside of mask: {} $$$$".format(num))
-
-            # if outside of mask is less than two points:
-            # (zero means all are inside or all are outside of the bounds of model)
-            if num < 2:
-                return
+            #if self.debug:
+                #print("Warped Corners (X,Y): {}".format(warped_corners))
 
             # update current position:
             self.current_pos = warped_corners
+
+            # TODO: check if warped corners are too much out of mask's dimensions:
+            if self.cornerTooFarOut(warped_corners, 100): # SETTINGS!
+                print("TOO FAR OUT in Model.add()")
+                return
+
+            (not_mapped, size) = self.placeNotMapped(frame, warped_corners)
+            thresh = size/12 # SETTINGS!
+
+            if not_mapped < thresh:
+                return
 
             new = np.zeros([self.model.img.shape[0], self.model.img.shape[1], 4], np.uint8)
             warped = cv2.warpPerspective(frame.img, H, (self.model.img.shape[1], self.model.img.shape[0]), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_TRANSPARENT)
@@ -236,10 +298,9 @@ class Model:
 
             drawed = np.copy(self.model.img)
 
-            if self.debug:
-                #cv2.imshow("expanded", self.model.img)
-                cv2.imshow("model", self.drawRect(drawed, warped_corners))
-                #cv2.waitKey(0)
+            self.mask = self.mkMask(self.model.img)
+            #thread.start_new_thread(self.model.detectKeyPoints, (cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY), 600))
+            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY), 1200) # SETTINGS
 
-            if self.debug:
-                print("Number of detected KP's: {}".format(len(self.model.kp)))
+            #if self.debug:
+                #print("Number of detected KP's: {}".format(len(self.model.kp)))
