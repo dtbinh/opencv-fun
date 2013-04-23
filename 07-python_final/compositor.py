@@ -81,6 +81,8 @@ class Compositor:
         movement_sum = (0.0, 0.0)
 
         while True:
+
+
             self.prev_frame = self.frame
             self.frame = self.grabNextFrame()
 
@@ -98,10 +100,22 @@ class Compositor:
                     cv2.destroyWindow("DEBUG")
                     break
 
-            if tracked == None or tracked < 50: # TODO: SETTINGS
+            # copy the model img for drawing:
+            drawed = np.copy(Compositor.model.model.img)
+
+            if tracked == None or tracked < 10: # TODO: SETTINGS
                 # TODO: here we should check for the movement size!
                 # TODO: or rather find out why exactly the tracking went wrong and fix it
                 self.frame.detectKeyPoints()
+                #Compositor.model.drawStr(drawed, (40,120), "Not Enough KeyPoint Tracked!")
+
+
+                #if self.debug:
+                    #cv2.imshow("model", cv2.resize(drawed, dsize=(0,0), fx=0.5, fy=0.5))
+                    #if cv2.waitKey(30) >= 0:
+                        #cv2.destroyWindow("DEBUG")
+                        #break
+
                 continue
 
             # tracking:
@@ -109,16 +123,22 @@ class Compositor:
 
             if H == None:
                 self.frame.detectKeyPoints()
+                Compositor.model.drawStr(drawed, (40,120), "Not Enough KeyPoint Tracked!")
+
+                if self.debug:
+                    cv2.imshow("model", cv2.resize(drawed, dsize=(0,0), fx=0.5, fy=0.5))
+                    if cv2.waitKey(30) >= 0:
+                        cv2.destroyWindow("DEBUG")
+                        break
+
                 continue
 
             # transformation of corners according to the homography matrix:
             warped_corners = Compositor.model.warpCorners(self.frame, H)
-            # copy the model img for drawing:
-            drawed = np.copy(Compositor.model.model.img)
 
             #if Compositor.model.numOfPointsOutOfModel(warped_corners, 200) < 2:
             if Compositor.model.cornerTooFarOut(warped_corners, 20): # SETTINGS
-                Compositor.model.drawStr(drawed, (40,120), "OUT OF MODEL!")
+                Compositor.model.drawStr(drawed, (40,120), "Out of Model!")
             else:
                 Compositor.model.drawRect(drawed, warped_corners)
 

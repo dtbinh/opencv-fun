@@ -95,7 +95,7 @@ class Model:
 
         prev_gkp, gkp = np.float32((prev_gkp, gkp))
 
-        if len(gkp) < 50: # TODO: SETTINGS!
+        if len(gkp) < 20: # TODO: SETTINGS!
             return None
 
         H, status = cv2.findHomography(prev_gkp, gkp, cv2.RANSAC, 3.0)
@@ -144,10 +144,10 @@ class Model:
         return np.dstack((mask, mask, mask, mask))
 
 
-    def makeKPMask(self, img, offset):
+    def makeKPMask(self, img, movement, offset):
         """
         Creates a mask of given image out of current position of camera + given
-        offset (into all directions).
+        movement + offset (into all directions).
         """
         self.current_pos
 
@@ -309,7 +309,7 @@ class Model:
             drawed = np.copy(self.model.img)
 
             self.mask = self.mkMask(self.model.img)
-            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY), 2000) # SETTINGS
+            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY), 1000) # SETTINGS
             #thread.start_new_thread(self.model.detectKeyPoints, (cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY), 600))
 
             #if self.debug:
