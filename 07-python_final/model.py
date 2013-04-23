@@ -6,6 +6,7 @@ import numpy as np
 from frame import Frame
 import common
 
+
 class Model:
     """
     Class representing the model of stitched images.
@@ -141,6 +142,14 @@ class Model:
         ## This is done because of the np.copyto() => mask has to have the same
         ## amount of channels as the image
         return np.dstack((mask, mask, mask, mask))
+
+
+    def makeKPMask(self, img, offset):
+        """
+        Creates a mask of given image out of current position of camera + given
+        offset (into all directions).
+        """
+        self.current_pos
 
 
     def numOfPointsInMask(self, points):
@@ -300,8 +309,8 @@ class Model:
             drawed = np.copy(self.model.img)
 
             self.mask = self.mkMask(self.model.img)
-            #thread.start_new_thread(self.model.detectKeyPoints, (cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY), 600))
             self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY), 2000) # SETTINGS
+            #thread.start_new_thread(self.model.detectKeyPoints, (cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY), 600))
 
             #if self.debug:
                 #print("Number of detected KP's: {}".format(len(self.model.kp)))
