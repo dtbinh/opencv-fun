@@ -277,14 +277,14 @@ class Model:
             self.current_pos = warped_corners
 
             # TODO: check if warped corners are too much out of mask's dimensions:
-            if self.cornerTooFarOut(warped_corners, 100): # SETTINGS!
+            if self.cornerTooFarOut(warped_corners, 20): # SETTINGS!
                 print("TOO FAR OUT in Model.add()")
                 return
 
             (not_mapped, size) = self.placeNotMapped(frame, warped_corners)
             thresh = size/12 # SETTINGS!
 
-            if not_mapped < thresh:
+            if not_mapped <= thresh:
                 return
 
             new = np.zeros([self.model.img.shape[0], self.model.img.shape[1], 4], np.uint8)

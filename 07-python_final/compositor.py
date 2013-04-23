@@ -111,7 +111,7 @@ class Compositor:
             drawed = np.copy(Compositor.model.model.img)
 
             #if Compositor.model.numOfPointsOutOfModel(warped_corners, 200) < 2:
-            if Compositor.model.cornerTooFarOut(warped_corners, 100): # SETTINGS
+            if Compositor.model.cornerTooFarOut(warped_corners, 20): # SETTINGS
                 Compositor.model.drawStr(drawed, (40,120), "OUT OF MODEL!")
             else:
                 Compositor.model.drawRect(drawed, warped_corners)
