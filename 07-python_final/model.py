@@ -247,7 +247,7 @@ class Model:
             self.__init__(frame, self.debug)
 
             self.mask = self.mkMask(self.model.img)
-            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY), 1200) # SETTINGS
+            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY)) # SETTINGS
 
         else:
             if self.debug:
@@ -284,13 +284,14 @@ class Model:
             (not_mapped, size) = self.placeNotMapped(frame, warped_corners)
             thresh = size/12 # SETTINGS!
 
-            if not_mapped <= thresh:
+            if not_mapped <= thresh or size-not_mapped < size/2:
                 return
 
             new = np.zeros([self.model.img.shape[0], self.model.img.shape[1], 4], np.uint8)
-            warped = cv2.warpPerspective(frame.img, H, (self.model.img.shape[1], self.model.img.shape[0]), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_TRANSPARENT)
+            warped = cv2.warpPerspective(frame.img, H, (self.model.img.shape[1], self.model.img.shape[0]), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
 
             new_mask = self.mkMask(warped)
+            print("SUM OF MASK: {}".format(np.sum(np.dsplit(self.mask, 4)[3])))
 
             # dst first, then src
             np.copyto(self.model.img, warped, where=np.array(new_mask, dtype=np.bool))
@@ -300,7 +301,7 @@ class Model:
 
             self.mask = self.mkMask(self.model.img)
             #thread.start_new_thread(self.model.detectKeyPoints, (cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY), 600))
-            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY), 1200) # SETTINGS
+            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY), 2000) # SETTINGS
 
             #if self.debug:
                 #print("Number of detected KP's: {}".format(len(self.model.kp)))

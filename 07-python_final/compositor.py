@@ -92,6 +92,12 @@ class Compositor:
 
             tracked = self.frame.trackKeyPoints(self.prev_frame)
 
+            if self.debug:
+                cv2.imshow("DEBUG", self.frame.img)
+                if cv2.waitKey(30) >= 0:
+                    cv2.destroyWindow("DEBUG")
+                    break
+
             if tracked == None or tracked < 50: # TODO: SETTINGS
                 # TODO: here we should check for the movement size!
                 # TODO: or rather find out why exactly the tracking went wrong and fix it
@@ -127,7 +133,7 @@ class Compositor:
             movement_sum = tuple(sum(item) for item in zip(movement_sum, self.frame.displacement))
 
             if self.debug:
-                cv2.imshow("DEBUG", self.frame.img)
+                #cv2.imshow("DEBUG", self.frame.img)
                 # TODO: implement text on image when camera out of model
                 cv2.imshow("model", cv2.resize(drawed, dsize=(0,0), fx=0.5, fy=0.5))
                 if cv2.waitKey(30) >= 0:
