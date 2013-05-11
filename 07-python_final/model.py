@@ -127,7 +127,7 @@ class Model:
         """
         Returns an image with Rectangle drawn (defined by points).
         """
-        cv2.polylines(img, [np.array(points, np.int32)], True, (0, 128, 255, 255), 3)
+        cv2.polylines(img, [np.array(points, np.int32)], True, (0, 255, 0, 255), 3)
 
         return img
 
@@ -136,7 +136,17 @@ class Model:
         """
         Returns an image with given text (s) on given coords drawn.
         """
-        cv2.putText(img, s, (x, y), cv2.FONT_HERSHEY_PLAIN, 6.0, (0, 128, 255, 255), thickness = 10, lineType=cv2.CV_AA)
+        cv2.putText(img, s, (x, y), cv2.FONT_HERSHEY_PLAIN, 6.0, (0, 255, 0, 255), thickness=10, lineType=cv2.CV_AA)
+
+        return img
+
+
+    def drawPoints(self, img, points):
+        """
+        Returns an image with given points drawn.
+        """
+        for point in points:
+            cv2.circle(img, (int(point[0]), int(point[1])), 10, (0, 255, 0, 255), thickness=3, lineType=cv2.CV_AA)
 
         return img
 
@@ -309,6 +319,18 @@ class Model:
         warped_corners = [(int(round(corner[0])), int(round(corner[1]))) for corner in warped_corners[0]]
 
         return warped_corners
+
+
+    def warpUserPoints(self, H, warped_corners):
+        """
+        Warps user defined points according to given inverse homography matrix.
+        """
+        points = np.array([self.user_points], dtype=np.float32)
+
+        warped_points = cv2.perspectiveTransform(points, np.matrix(H).I)
+        warped_points = [(int(round(point[0])), int(round(point[1]))) for point in warped_points[0]]
+
+        return warped_points
 
 
     def add(self, frame, movement):

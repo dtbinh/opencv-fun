@@ -77,10 +77,12 @@ class Compositor:
         """
         Callback function for mouse clicking.
         """
-        pt = (x, y)
+        pt = (x*2, y*2)
         if self.paused and event == cv2.EVENT_LBUTTONDOWN:
-            print("ADDING POINT {}.".format(pt))
             self.model.addUserPoint(pt)
+
+            Compositor.model.drawPoints(self.drawed_model, Compositor.model.user_points)
+            cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=0.5, fy=0.5))
 
 
     def run(self):
@@ -116,8 +118,8 @@ class Compositor:
                     #cv2.destroyAllWindows()
                     #break
                 #elif ch == ord(' '):
-                    #Compositor.model.drawStr(drawed, (40,120), "Paused, press SPACE to resume")
-                    #cv2.imshow("model", cv2.resize(drawed, dsize=(0,0), fx=0.5, fy=0.5))
+                    #Compositor.model.drawStr(self.drawed_model, (40,120), "Paused, press SPACE to resume")
+                    #cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=0.5, fy=0.5))
                     #while True:
                         #ch = cv2.waitKey(1)
                         #if ch == ord(' '):
@@ -127,17 +129,18 @@ class Compositor:
                             #return
 
             # copy the model img for drawing:
-            drawed = np.copy(Compositor.model.model.img)
+            self.drawed_model = np.copy(Compositor.model.model.img)
+            drawed_frame = np.copy(self.frame.img)
 
             if tracked == None or tracked < 10: # TODO: SETTINGS
                 # TODO: here we should check for the movement size!
                 # TODO: or rather find out why exactly the tracking went wrong and fix it
                 self.frame.detectKeyPoints()
-                #Compositor.model.drawStr(drawed, (40,120), "Not Enough KeyPoint Tracked!")
+                #Compositor.model.drawStr(self.drawed_model, (40,120), "Not Enough KeyPoint Tracked!")
 
 
                 #if self.debug:
-                    #cv2.imshow("model", cv2.resize(drawed, dsize=(0,0), fx=0.5, fy=0.5))
+                    #cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=0.5, fy=0.5))
                     #if cv2.waitKey(30) >= 0:
                         #cv2.destroyWindow("DEBUG")
                         #break
@@ -149,11 +152,11 @@ class Compositor:
 
             if H == None:
                 self.frame.detectKeyPoints()
-                Compositor.model.drawStr(drawed, (40,120), "Not Enough KeyPoint Tracked!")
+                Compositor.model.drawStr(self.drawed_model, (40,120), "Not Enough KeyPoint Tracked!")
 
                 if self.debug:
-                    cv2.imshow("DEBUG", self.frame.img)
-                    cv2.imshow("model", cv2.resize(drawed, dsize=(0,0), fx=0.5, fy=0.5))
+                    cv2.imshow("frame", drawed_frame)
+                    cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=0.5, fy=0.5)) # TODO: settings
 
                     ch = cv2.waitKey(1)
                     if ch == 27 or ch == ord('q'): # ESC or q
@@ -161,8 +164,8 @@ class Compositor:
                         break
                     elif ch == ord(' '):
                         self.paused = True
-                        Compositor.model.drawStr(drawed, (40,120), "Paused, press SPACE to resume")
-                        cv2.imshow("model", cv2.resize(drawed, dsize=(0,0), fx=0.5, fy=0.5))
+                        Compositor.model.drawStr(self.drawed_model, (40,120), "Paused, press SPACE to resume")
+                        cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=0.5, fy=0.5)) # TODO: settings
                         while self.paused:
                             ch = cv2.waitKey(1)
                             if ch == ord(' '):
@@ -177,11 +180,17 @@ class Compositor:
             # transformation of corners according to the homography matrix:
             warped_corners = Compositor.model.warpCorners(self.frame, H)
 
-            #if Compositor.model.numOfPointsOutOfModel(warped_corners, 200) < 2:
+            if Compositor.model.user_points:
+                warped_user_points = Compositor.model.warpUserPoints(H, warped_corners)
+                Compositor.model.drawPoints(drawed_frame, warped_user_points)
+
+                Compositor.model.drawPoints(self.drawed_model, Compositor.model.user_points)
+
             if Compositor.model.cornerTooFarOut(warped_corners, 20): # SETTINGS
-                Compositor.model.drawStr(drawed, (40,120), "Out of Model!")
+                Compositor.model.drawStr(self.drawed_model, (40,120), "Out of Model!")
             else:
-                Compositor.model.drawRect(drawed, warped_corners)
+                Compositor.model.drawRect(self.drawed_model, warped_corners)
+
 
 
             # TODO: work on this condition!
@@ -196,16 +205,16 @@ class Compositor:
             if self.debug:
                 #cv2.imshow("DEBUG", self.frame.img)
                 # TODO: implement text on image when camera out of model
-                cv2.imshow("DEBUG", self.frame.img)
-                cv2.imshow("model", cv2.resize(drawed, dsize=(0,0), fx=0.5, fy=0.5))
+                cv2.imshow("frame", drawed_frame)
+                cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=0.5, fy=0.5))
                 ch = cv2.waitKey(1)
                 if ch == 27 or ch == ord('q'): # ESC or q
                     cv2.destroyAllWindows()
                     break
                 elif ch == ord(' '):
                     self.paused = True
-                    Compositor.model.drawStr(drawed, (40,120), "Paused, press SPACE to resume")
-                    cv2.imshow("model", cv2.resize(drawed, dsize=(0,0), fx=0.5, fy=0.5))
+                    Compositor.model.drawStr(self.drawed_model, (40,120), "Paused, press SPACE to resume")
+                    cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=0.5, fy=0.5))
                     while self.paused:
                         ch = cv2.waitKey(1)
                         if ch == ord(' '):
