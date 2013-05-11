@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 
+"""
+Source code file containing functions called by various class methods.
+"""
+
 import numpy as np
 import cv2
 
 from settings import s
+
 
 def keyPoint2Point(kp):
     """
@@ -34,8 +39,7 @@ def point2Keypoint(points, prev_kp=None, kp_size=1):
 
 def filterKPUsingHomography(prev_frame, frame):
     """
-    Returns a homography matrix. 'good_matches' are to be obtained by running
-    'filterGoodKeyPoints() function'.
+    Filters Key Points using the RANSAC algorithm.
     """
     prev_points = keyPoint2Point(prev_frame.kp)
     points = keyPoint2Point(frame.kp)
@@ -47,7 +51,7 @@ def filterKPUsingHomography(prev_frame, frame):
     if len(points) < s["min_tracked"]:
         return (None, None)
 
-    H, status = cv2.findHomography(prev_points, points, cv2.RANSAC, 3.0) # TODO: SETTINGS
+    H, status = cv2.findHomography(prev_points, points, cv2.RANSAC, 3.0)
 
     prev_gkp = []
     gkp = []

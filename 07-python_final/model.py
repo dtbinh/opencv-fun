@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""
+Source code file containing the Model class implementation.
+"""
+
 import cv2
 import numpy as np
 
@@ -10,14 +14,14 @@ from settings import s
 
 class Model:
     """
-    Class representing the model of stitched images.
+    Class representing the model of captured object.
+    Provides methods for image stitching and rendering additional information.
     """
     def __init__(self, frame=None):
         """
-        Initialises an instance of Model class.
+        Initializes an instance of Model class.
 
-        The initial image is passed here as 'frame' parameter or later using
-        the 'add()' method.
+        The initial image is passed here as 'frame' parameter.
         """
         if frame != None:
             img = np.zeros((s["model_h"], s["model_w"], 4), dtype=np.uint8)
@@ -56,7 +60,7 @@ class Model:
 
     def computeHomography(self, frame):
         """
-        Computes Homography Matrix and returns it.
+        Computes Homography matrix and returns it.
         """
         FLANN_INDEX_KDTREE = 1
         FLANN_INDEX_LSH    = 6
@@ -93,7 +97,7 @@ class Model:
 
     def drawRect(self, img, points):
         """
-        Returns an image with Rectangle drawn (defined by points).
+        Returns an image with Rectangle drawn (defined by given points).
         """
         cv2.polylines(img, [np.array(points, np.int32)], True, s["drawing_col"], 3)
 
@@ -102,7 +106,7 @@ class Model:
 
     def drawStr(self, img, (x, y), string):
         """
-        Returns an image with given text (s) on given coords drawn.
+        Returns an image with text (string) at given coords drawn.
         """
         cv2.putText(img, string, (x, y), cv2.FONT_HERSHEY_PLAIN, 6.0, s["drawing_col"], thickness=10, lineType=cv2.CV_AA)
 
@@ -121,7 +125,7 @@ class Model:
 
     def mkMask(self, img):
         """
-        Creates a mask of model image based on thresholding the color value.
+        Creates a mask of model image based on thresholding the alpha channel value.
         """
         mask = np.zeros((img.shape[0], img.shape[1], 1), dtype=np.uint8)
         alpha = np.dsplit(img, 4)[3]
@@ -166,7 +170,7 @@ class Model:
 
     def warpCorners(self, frame, H):
         """
-        Warps corners of given image according to given homography matrix.
+        Warps corners of given image according to the homography matrix.
 
         Returns transformed corners.
         """

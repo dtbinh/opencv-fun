@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+"""
+Main file
+This is the entry point for the application.
+"""
+
 import argparse
 import sys
 
@@ -9,7 +14,7 @@ from settings import s
 def main():
     """
     Main function of the application.
-    Gets apps parameters and runs the compositing.
+    Gets apps parameters and runs the composition.
     """
 
     parser = argparse.ArgumentParser(

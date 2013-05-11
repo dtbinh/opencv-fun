@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""
+Source code file containing the Frame class implementation.
+"""
+
 import cv2
 import numpy as np
 import copy
@@ -7,13 +11,15 @@ import copy
 import common
 from settings import s
 
+
 class Frame():
     """
-    Class representing the Frame class.
+    Class representing the Frame object.
+    Provides methods for key point detection and tracking.
     """
     def __init__(self, image, crop=False):
         """
-        Initialises an instance of the Frame class.
+        Initializes an instance of the Frame class.
         """
         self.detector = cv2.SURF(s["surf_hessian"])
         self.extractor = cv2.DescriptorExtractor_create("SURF")

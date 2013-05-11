@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""
+Source code file containing the Compositor class implementation.
+"""
+
 import numpy as np
 import cv2
 
@@ -9,14 +13,14 @@ from settings import s
 
 class Compositor:
     """
-    Class representing the Compositor object that takes care of taking frames,
-    processing them and putting them together in the Model instance.
+    Class representing the Compositor object that provides methods for taking
+    frames, processing them and putting them together in the Model instance.
     """
     model = None
 
     def __init__(self, video_source=s["video_source"]):
         """
-        Initialises an instance of Compositor class.
+        Initializes an instance of Compositor class.
 
         Parameter video_source can be number of video device or filename of
         a video file.

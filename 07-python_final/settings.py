@@ -2,8 +2,7 @@
 
 """
 Settings file
-
-Stores all application parameters in a single dictionary
+Stores all application parameters in a single dictionary.
 """
 
 s = {
