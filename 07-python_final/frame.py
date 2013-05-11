@@ -2,27 +2,27 @@
 
 import cv2
 import numpy as np
-import common
 import copy
+
+import common
+import settings as s
 
 class Frame():
     """
     Class representing the Frame class.
     """
-    def __init__(self, image, crop=True):
+    def __init__(self, image, crop=False):
         """
         Initialises an instance of the Frame class.
         """
-        self.detector = cv2.SURF(1000) # TODO: SETTINGS
+        self.detector = cv2.SURF(s.surf_hessian)
         self.extractor = cv2.DescriptorExtractor_create("SURF")
 
         # cropping
         if crop:
-            crop_by = (int(image.shape[0]/20), int(image.shape[1]/20)) # TODO: settings
-            cropped_img = image[crop_by[0]:image.shape[0]-2*crop_by[0], crop_by[1]:image.shape[1]-2*crop_by[1]]
-            self.img = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2BGRA)
-        else:
-            self.img = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
+            image = image[0:image.shape[0]-s.crop_by, 0:image.shape[1]-s.crop_by]
+
+        self.img = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
 
         self.kp = None
         self.desc = None

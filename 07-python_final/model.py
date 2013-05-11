@@ -5,6 +5,7 @@ import numpy as np
 
 from frame import Frame
 import common
+import settings as s
 
 
 class Model:
@@ -19,7 +20,7 @@ class Model:
         the 'add()' method.
         """
         if frame != None:
-            img = np.zeros((1500, 2000, 4), dtype=np.uint8) # TODO: settings!
+            img = np.zeros((s.model_w, s.model_h, 4), dtype=np.uint8)
             self.model = Frame(img, crop=False)
 
             # Coordinates:
@@ -76,7 +77,7 @@ class Model:
 
         prev_gkp, gkp = np.float32((prev_gkp, gkp))
 
-        if len(gkp) < 20: # TODO: SETTINGS!
+        if len(gkp) < s.min_matches:
             return None
 
         H, status = cv2.findHomography(prev_gkp, gkp, cv2.RANSAC, 3.0)
@@ -94,16 +95,16 @@ class Model:
         """
         Returns an image with Rectangle drawn (defined by points).
         """
-        cv2.polylines(img, [np.array(points, np.int32)], True, (0, 255, 0, 255), 3)
+        cv2.polylines(img, [np.array(points, np.int32)], True, s.drawing_col, 3)
 
         return img
 
 
-    def drawStr(self, img, (x, y), s):
+    def drawStr(self, img, (x, y), string):
         """
         Returns an image with given text (s) on given coords drawn.
         """
-        cv2.putText(img, s, (x, y), cv2.FONT_HERSHEY_PLAIN, 6.0, (0, 255, 0, 255), thickness=10, lineType=cv2.CV_AA)
+        cv2.putText(img, string, (x, y), cv2.FONT_HERSHEY_PLAIN, 6.0, s.drawing_col, thickness=10, lineType=cv2.CV_AA)
 
         return img
 
@@ -113,7 +114,7 @@ class Model:
         Returns an image with given points drawn.
         """
         for point in points:
-            cv2.circle(img, (int(point[0]), int(point[1])), 10, (0, 255, 0, 255), thickness=3, lineType=cv2.CV_AA)
+            cv2.circle(img, (int(point[0]), int(point[1])), 10, s.drawing_col, thickness=3, lineType=cv2.CV_AA)
 
         return img
 
@@ -221,13 +222,13 @@ class Model:
             self.current_pos = warped_corners
 
             # check if warped corners are too much out of mask's dimensions:
-            if self.cornerTooFarOut(warped_corners, 20): # SETTINGS!
+            if self.cornerTooFarOut(warped_corners, s.max_offset):
                 return
 
             (not_mapped, size) = self.placeNotMapped(frame, warped_corners)
-            thresh = size/12 # SETTINGS!
+            thresh = size*(s.min_unmapped_area/100)
 
-            if not_mapped <= thresh or size-not_mapped < size/2: # SETTINGS
+            if not_mapped <= thresh or size-not_mapped < size*(min_mapped_area/100):
                 return
 
             new = np.zeros([self.model.img.shape[0], self.model.img.shape[1], 4], np.uint8)
@@ -241,4 +242,4 @@ class Model:
             cv2.imwrite("result.png", self.model.img)
 
             self.mask = self.mkMask(self.model.img)
-            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY), 1200) # SETTINGS
+            self.model.detectKeyPoints(cv2.cvtColor(self.mask, cv2.COLOR_BGRA2GRAY), s.model_surf_hessian)
