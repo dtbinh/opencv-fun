@@ -24,7 +24,7 @@ def TestFeatures():
     f = Frame(img, crop=True, debug=True)
     kp = f.detectKeyPoints()
 
-    f.showDetectedKeyPoints()
+    f._showDetectedKeyPoints()
 
 
 def TestFeaturesMask():
@@ -36,7 +36,7 @@ def TestFeaturesMask():
     mask[200:500, 0:300] = 1
 
     kp = ff.detectKeyPoints(mask=mask)
-    ff.showDetectedKeyPoints()
+    ff._showDetectedKeyPoints()
 
 
 def TestFPTracking():
@@ -50,7 +50,7 @@ def TestFPTracking():
 
 
 def TestCompositor():
-    compositor = Compositor("../img/video/foglab3.mov", rt_result=True, debug=True)
+    compositor = Compositor("../img/video/poster01-lowres.mp4", rt_result=True, debug=True)
     #compositor = Compositor(1, rt_result=True, debug=True)
     compositor.run()
 

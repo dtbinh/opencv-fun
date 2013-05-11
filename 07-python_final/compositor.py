@@ -28,6 +28,11 @@ class Compositor:
             print("Could not open: {}".format(video_source))
             exit()
 
+        self.model_window = cv2.namedWindow("model")
+        cv2.setMouseCallback("model", self.onMouseClick)
+
+        self.paused = False
+
         self.frame = self.grabNextFrame()
         Compositor.model = Model(self.frame, debug=True)
         self.prev_frame = None
@@ -38,7 +43,7 @@ class Compositor:
         Function reads next image from video capture device/file and returns
         created Frame object using the image previously read.
         """
-        for x in range(2): # TODO: SETTINGS
+        for x in range(1): # TODO: SETTINGS
             ret, img = self.cap.read()
 
             if not ret:
@@ -68,6 +73,16 @@ class Compositor:
             print("Current position in model: {}".format(Compositor.model.current_pos))
 
 
+    def onMouseClick(self, event, x, y, flags, param):
+        """
+        Callback function for mouse clicking.
+        """
+        pt = (x, y)
+        if self.paused and event == cv2.EVENT_LBUTTONDOWN:
+            print("ADDING POINT {}.".format(pt))
+            self.model.addUserPoint(pt)
+
+
     def run(self):
         """
         The main working function of Compositor class. It reads images from
@@ -94,11 +109,22 @@ class Compositor:
 
             tracked = self.frame.trackKeyPoints(self.prev_frame)
 
-            if self.debug:
-                cv2.imshow("DEBUG", self.frame.img)
-                if cv2.waitKey(30) >= 0:
-                    cv2.destroyWindow("DEBUG")
-                    break
+            #if self.debug:
+
+                #ch = cv2.waitKey(1)
+                #if ch == 27 or ch == ord('q'): # ESC or q
+                    #cv2.destroyAllWindows()
+                    #break
+                #elif ch == ord(' '):
+                    #Compositor.model.drawStr(drawed, (40,120), "Paused, press SPACE to resume")
+                    #cv2.imshow("model", cv2.resize(drawed, dsize=(0,0), fx=0.5, fy=0.5))
+                    #while True:
+                        #ch = cv2.waitKey(1)
+                        #if ch == ord(' '):
+                            #break
+                        #elif ch == 27 or ch == ord('q'):
+                            #cv2.destroyAllWindows()
+                            #return
 
             # copy the model img for drawing:
             drawed = np.copy(Compositor.model.model.img)
@@ -126,10 +152,25 @@ class Compositor:
                 Compositor.model.drawStr(drawed, (40,120), "Not Enough KeyPoint Tracked!")
 
                 if self.debug:
+                    cv2.imshow("DEBUG", self.frame.img)
                     cv2.imshow("model", cv2.resize(drawed, dsize=(0,0), fx=0.5, fy=0.5))
-                    if cv2.waitKey(30) >= 0:
-                        cv2.destroyWindow("DEBUG")
+
+                    ch = cv2.waitKey(1)
+                    if ch == 27 or ch == ord('q'): # ESC or q
+                        cv2.destroyAllWindows()
                         break
+                    elif ch == ord(' '):
+                        self.paused = True
+                        Compositor.model.drawStr(drawed, (40,120), "Paused, press SPACE to resume")
+                        cv2.imshow("model", cv2.resize(drawed, dsize=(0,0), fx=0.5, fy=0.5))
+                        while self.paused:
+                            ch = cv2.waitKey(1)
+                            if ch == ord(' '):
+                                self.paused = False
+                                break
+                            elif ch == 27 or ch == ord('q'):
+                                cv2.destroyAllWindows()
+                                return
 
                 continue
 
@@ -145,7 +186,7 @@ class Compositor:
 
             # TODO: work on this condition!
             #       like if the combined size of x and y is > xx ... (a function maybe?)
-            if abs(movement_sum[0]) > 100 or abs(movement_sum[1]) > 100: # TODO: SETTINGS
+            if abs(movement_sum[0]) > 100 or abs(movement_sum[1]) > 100 or sum(movement_sum[:]) > 100: # TODO: SETTINGS
                 self.addFrameToModel(movement_sum)
                 movement_sum = (0.0, 0.0)
                 continue
@@ -155,7 +196,22 @@ class Compositor:
             if self.debug:
                 #cv2.imshow("DEBUG", self.frame.img)
                 # TODO: implement text on image when camera out of model
+                cv2.imshow("DEBUG", self.frame.img)
                 cv2.imshow("model", cv2.resize(drawed, dsize=(0,0), fx=0.5, fy=0.5))
-                if cv2.waitKey(30) >= 0:
-                    cv2.destroyWindow("DEBUG")
+                ch = cv2.waitKey(1)
+                if ch == 27 or ch == ord('q'): # ESC or q
+                    cv2.destroyAllWindows()
                     break
+                elif ch == ord(' '):
+                    self.paused = True
+                    Compositor.model.drawStr(drawed, (40,120), "Paused, press SPACE to resume")
+                    cv2.imshow("model", cv2.resize(drawed, dsize=(0,0), fx=0.5, fy=0.5))
+                    while self.paused:
+                        ch = cv2.waitKey(1)
+                        if ch == ord(' '):
+                            self.paused = False
+                            break
+                        elif ch == 27 or ch == ord('q'):
+                            cv2.destroyAllWindows()
+                            return
+
