@@ -5,22 +5,18 @@ import numpy as np
 import common
 import copy
 
-
 class Frame():
     """
     Class representing the Frame class.
     """
-    def __init__(self, image, crop=True, debug=False):
+    def __init__(self, image, crop=True):
         """
         Initialises an instance of the Frame class.
         """
-        # TODO: experiment with the SURF() value to get better results faster
         self.detector = cv2.SURF(1000) # TODO: SETTINGS
         self.extractor = cv2.DescriptorExtractor_create("SURF")
 
-        self.debug = debug
-
-        # cropping in order to get rid of potentially disrupted borders
+        # cropping
         if crop:
             crop_by = (int(image.shape[0]/20), int(image.shape[1]/20)) # TODO: settings
             cropped_img = image[crop_by[0]:image.shape[0]-2*crop_by[0], crop_by[1]:image.shape[1]-2*crop_by[1]]
@@ -31,9 +27,6 @@ class Frame():
         self.kp = None
         self.desc = None
         self.displacement = (0.0, 0.0)
-
-        if self.debug:
-            print("Frame initialised (debug={}).".format(self.debug))
 
 
     def detectKeyPoints(self, mask=None, hessian=None):
@@ -49,9 +42,6 @@ class Frame():
 
         self.grayscale = cv2.cvtColor(self.img, cv2.COLOR_BGRA2GRAY)
         (self.kp, self.desc) = self.detector.detectAndCompute(self.grayscale, mask)
-
-        if self.debug:
-            print("Keypoints detected ({}) and descriptors extracted.".format(len(self.kp)))
 
         if hessian != None:
             self.detector = old_detector
@@ -81,10 +71,6 @@ class Frame():
 
         Returns a tuple representing Point coords: (y, x)
         """
-        # TODO: If values differ too much:
-        #         * filter out such values
-        #         * abort and detect KP
-
         ds_x = []
         ds_y = []
         for i in range(len(kp)):
@@ -133,16 +119,5 @@ class Frame():
         # calculate displacement
         self.displacement = self._calcAvgDisplacement(prev_frame.kp, self.kp)
 
-        if self.debug:
-            print("Keypoints tracked ({}), displacement: {}.".format(len(self.kp), self.displacement))
-
         return len(self.kp)
-
-
-    def __del__(self):
-        """
-        Removes the instance of Frame class.
-        """
-        if self.debug:
-            print("Frame deleted.")
 

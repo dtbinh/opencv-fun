@@ -21,7 +21,7 @@ def TestImread(img_file="../img/s01.jpg"):
 
 def TestFeatures():
     img = cv2.imread("../img/s01.jpg")
-    f = Frame(img, crop=True, debug=True)
+    f = Frame(img, crop=True)
     kp = f.detectKeyPoints()
 
     f._showDetectedKeyPoints()
@@ -29,7 +29,7 @@ def TestFeatures():
 
 def TestFeaturesMask():
     img = cv2.imread("../img/s01.jpg")
-    ff = Frame(img, crop=True, debug=True)
+    ff = Frame(img, crop=True)
     #gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     mask = np.zeros(img.shape[:2], np.uint8)
 
@@ -41,16 +41,16 @@ def TestFeaturesMask():
 
 def TestFPTracking():
     i = cv2.imread("../img/s01.jpg")
-    f = Frame(i, crop=True, debug=True)
+    f = Frame(i, crop=True)
     f.detectKeyPoints()
 
     j = cv2.imread("../img/s02.jpg")
-    g = Frame(j, crop=True, debug=True)
+    g = Frame(j, crop=True)
     kp = g.trackKeyPoints(f)
 
 
 def TestCompositor():
-    compositor = Compositor("../img/video/poster01-lowres.mp4", rt_result=True, debug=True)
+    compositor = Compositor("../img/video/poster01-lowres.mp4")
     #compositor = Compositor(1, rt_result=True, debug=True)
     compositor.run()
 
