@@ -20,7 +20,7 @@ class Model:
         the 'add()' method.
         """
         if frame != None:
-            img = np.zeros((s["model_w"], s["model_h"], 4), dtype=np.uint8)
+            img = np.zeros((s["model_h"], s["model_w"], 4), dtype=np.uint8)
             self.model = Frame(img, crop=False)
 
             # Coordinates:
