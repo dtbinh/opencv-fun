@@ -5,7 +5,7 @@ import cv2
 
 from frame import Frame
 from model import Model
-import settings as s
+from settings import s
 
 class Compositor:
     """
@@ -14,7 +14,7 @@ class Compositor:
     """
     model = None
 
-    def __init__(self, video_source=s.video_source):
+    def __init__(self, video_source=s["video_source"]):
         """
         Initialises an instance of Compositor class.
 
@@ -43,13 +43,13 @@ class Compositor:
         Function reads next image from video capture device/file and returns
         created Frame object using the image previously read.
         """
-        for x in range(s.skip+1):
+        for x in range(s["skip"]+1):
             ret, img = self.cap.read()
 
             if not ret:
                 return None
 
-        return Frame(img, s.crop)
+        return Frame(img, s["crop"])
 
 
     def addFrameToModel(self, movement=(0.0, 0.0)):
@@ -70,14 +70,14 @@ class Compositor:
         """
         Callback function for mouse clicking.
         """
-        inv_scale = 1/s.scale
+        inv_scale = 1/s["scale"]
 
         pt = (x*inv_scale, y*inv_scale)
         if self.paused and event == cv2.EVENT_LBUTTONDOWN:
             self.model.addUserPoint(pt)
 
             Compositor.model.drawPoints(self.drawed_model, Compositor.model.user_points)
-            cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=s.scale, fy=s.scale))
+            cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=s["scale"], fy=s["scale"]))
 
 
     def run(self):
@@ -105,7 +105,7 @@ class Compositor:
             # tracking:
             tracked = self.frame.trackKeyPoints(self.prev_frame)
 
-            if tracked == None or tracked < s.min_tracked:
+            if tracked == None or tracked < s["min_tracked"]:
                 self.frame.detectKeyPoints()
                 continue
 
@@ -121,7 +121,7 @@ class Compositor:
                 Compositor.model.drawStr(self.drawed_model, (40,120), "Not Enough KeyPoint Tracked!")
 
                 cv2.imshow("frame", drawed_frame)
-                cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=s.scale, fy=s.scale)) # TODO: settings
+                cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=s["scale"], fy=s["scale"])) # TODO: settings
 
                 ch = cv2.waitKey(1)
                 if ch == 27 or ch == ord('q'): # ESC or q
@@ -132,7 +132,7 @@ class Compositor:
                 elif ch == ord(' '):
                     self.paused = True
                     Compositor.model.drawStr(self.drawed_model, (40,120), "Paused, press SPACE to resume")
-                    cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=s.scale, fy=s.scale)) # TODO: settings
+                    cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=s["scale"], fy=s["scale"])) # TODO: settings
                     while self.paused:
                         ch = cv2.waitKey(1)
                         if ch == ord(' '):
@@ -152,13 +152,13 @@ class Compositor:
                 Compositor.model.drawPoints(drawed_frame, warped_user_points)
                 Compositor.model.drawPoints(self.drawed_model, Compositor.model.user_points)
 
-            if Compositor.model.cornerTooFarOut(warped_corners, s.max_offset):
+            if Compositor.model.cornerTooFarOut(warped_corners, s["max_offset"]):
                 Compositor.model.drawStr(self.drawed_model, (40,120), "Out of Model!")
             else:
                 Compositor.model.drawRect(self.drawed_model, warped_corners)
 
 
-            if abs(movement_sum[0]) > s.max_mv or abs(movement_sum[1]) > s.max_mv or sum(movement_sum[:]) > s.max_mv:
+            if abs(movement_sum[0]) > s["max_mv"] or abs(movement_sum[1]) > s["max_mv"] or sum(movement_sum[:]) > s["max_mv"]:
                 self.addFrameToModel(movement_sum)
                 movement_sum = (0.0, 0.0)
                 continue
@@ -166,7 +166,7 @@ class Compositor:
             movement_sum = tuple(sum(item) for item in zip(movement_sum, self.frame.displacement))
 
             cv2.imshow("frame", drawed_frame)
-            cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=s.scale, fy=s.scale))
+            cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=s["scale"], fy=s["scale"]))
             ch = cv2.waitKey(1)
             if ch == 27 or ch == ord('q'): # ESC or q
                 cv2.destroyAllWindows()
@@ -176,7 +176,7 @@ class Compositor:
             elif ch == ord(' '):
                 self.paused = True
                 Compositor.model.drawStr(self.drawed_model, (40,120), "Paused, press SPACE to resume")
-                cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=s.scale, fy=s.scale))
+                cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=s["scale"], fy=s["scale"]))
                 while self.paused:
                     ch = cv2.waitKey(1)
                     if ch == ord(' '):

@@ -3,7 +3,7 @@
 import numpy as np
 import cv2
 
-import settings as s
+from settings import s
 
 def keyPoint2Point(kp):
     """
@@ -44,7 +44,7 @@ def filterKPUsingHomography(prev_frame, frame):
     if len(prev_points) != len(points):
         return (None, None)
 
-    if len(points) < s.min_tracked:
+    if len(points) < s["min_tracked"]:
         return (None, None)
 
     H, status = cv2.findHomography(prev_points, points, cv2.RANSAC, 3.0) # TODO: SETTINGS

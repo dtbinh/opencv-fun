@@ -5,7 +5,7 @@ import numpy as np
 import copy
 
 import common
-import settings as s
+from settings import s
 
 class Frame():
     """
@@ -15,12 +15,12 @@ class Frame():
         """
         Initialises an instance of the Frame class.
         """
-        self.detector = cv2.SURF(s.surf_hessian)
+        self.detector = cv2.SURF(s["surf_hessian"])
         self.extractor = cv2.DescriptorExtractor_create("SURF")
 
         # cropping
         if crop:
-            image = image[0:image.shape[0]-s.crop_by, 0:image.shape[1]-s.crop_by]
+            image = image[0:image.shape[0]-s["crop_by"], 0:image.shape[1]-s["crop_by"]]
 
         self.img = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
 
