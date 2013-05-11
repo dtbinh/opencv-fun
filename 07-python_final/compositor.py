@@ -41,6 +41,7 @@ class Compositor:
         Compositor.model = Model(self.frame)
         self.prev_frame = None
 
+        self.text_pos = (int(40*s["scale"]), int(80*s["scale"]))
 
     def grabNextFrame(self):
         """
@@ -122,7 +123,7 @@ class Compositor:
 
             if H == None:
                 self.frame.detectKeyPoints()
-                Compositor.model.drawStr(self.drawed_model, (40,120), "Not Enough KeyPoint Tracked!")
+                Compositor.model.drawStr(self.drawed_model, self.text_pos, "Not Enough KeyPoint Tracked!")
 
                 cv2.imshow("frame", drawed_frame)
                 cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=s["scale"], fy=s["scale"])) # TODO: settings
@@ -135,7 +136,7 @@ class Compositor:
                     self.show_points = not(self.show_points)
                 elif ch == ord(' '):
                     self.paused = True
-                    Compositor.model.drawStr(self.drawed_model, (40,120), "Paused, press SPACE to resume")
+                    Compositor.model.drawStr(self.drawed_model, self.text_pos, "Paused, press SPACE to resume")
                     cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=s["scale"], fy=s["scale"])) # TODO: settings
                     while self.paused:
                         ch = cv2.waitKey(1)
@@ -157,7 +158,7 @@ class Compositor:
                 Compositor.model.drawPoints(self.drawed_model, Compositor.model.user_points)
 
             if Compositor.model.cornerTooFarOut(warped_corners, s["max_offset"]):
-                Compositor.model.drawStr(self.drawed_model, (40,120), "Out of Model!")
+                Compositor.model.drawStr(self.drawed_model, self.text_pos, "Out of Model!")
             else:
                 Compositor.model.drawRect(self.drawed_model, warped_corners)
 
@@ -179,7 +180,7 @@ class Compositor:
                 self.show_points = not(self.show_points)
             elif ch == ord(' '):
                 self.paused = True
-                Compositor.model.drawStr(self.drawed_model, (40,120), "Paused, press SPACE to resume")
+                Compositor.model.drawStr(self.drawed_model, self.text_pos, "Paused, press SPACE to resume")
                 cv2.imshow("model", cv2.resize(self.drawed_model, dsize=(0,0), fx=s["scale"], fy=s["scale"]))
                 while self.paused:
                     ch = cv2.waitKey(1)

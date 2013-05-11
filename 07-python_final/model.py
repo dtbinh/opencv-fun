@@ -99,7 +99,7 @@ class Model:
         """
         Returns an image with Rectangle drawn (defined by given points).
         """
-        cv2.polylines(img, [np.array(points, np.int32)], True, s["drawing_col"], 3)
+        cv2.polylines(img, [np.array(points, np.int32)], True, s["drawing_col"], 3, lineType=cv2.CV_AA)
 
         return img
 
@@ -108,7 +108,7 @@ class Model:
         """
         Returns an image with text (string) at given coords drawn.
         """
-        cv2.putText(img, string, (x, y), cv2.FONT_HERSHEY_PLAIN, 6.0, s["drawing_col"], thickness=10, lineType=cv2.CV_AA)
+        cv2.putText(img, string, (x, y), cv2.FONT_HERSHEY_PLAIN, 4.0*s["scale"], s["drawing_col"], thickness=int(8*s["scale"]), lineType=cv2.CV_AA)
 
         return img
 
